@@ -10,7 +10,7 @@ import { todayJST } from '../utils/date-utils.js';
 
 // ---- State ----
 let menuItems = [];
-let selectedItem = null;
+let selectedItems = []; // 複数選択対応
 let activeCategory = 'all';
 let todayPointUsed = false;
 let userBalance = 0;
@@ -108,7 +108,7 @@ function renderMenu() {
     const stock = item.stock_count ?? item.stock;
     const stockNum = Number(stock);
     const isOutOfStock = stock !== undefined && stock !== -1 && stockNum === 0;
-    const isSelected = selectedItem && (selectedItem.item_id ?? selectedItem.id) === itemId;
+    const isSelected = selectedItems.some(s => (s.item_id ?? s.id) === itemId);
     const isFree = Number(item.price) === 0 || item.category === 'free';
     const emoji = escapeHtml(item.image_emoji ?? item.emoji ?? item.icon ?? '☕');
     const name = escapeHtml(itemName);
@@ -155,7 +155,7 @@ function updateOrderBar() {
   const paypayBtn = btnPaypay();
   const page = pageEl();
 
-  if (!bar || !selectedItem) {
+  if (!bar || selectedItems.length === 0) {
     if (bar) {
       bar.classList.remove('is-visible');
       bar.setAttribute('aria-hidden', 'true');
@@ -164,10 +164,14 @@ function updateOrderBar() {
     return;
   }
 
-  const isFree = Number(selectedItem.price) === 0 || selectedItem.category === 'free';
+  // 選択商品一覧を表示
+  const names = selectedItems.map(i => i.item_name ?? i.name ?? '不明');
+  const totalPrice = selectedItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
+  const allFree = selectedItems.every(i => Number(i.price) === 0 || i.category === 'free');
+  const hasPaid = selectedItems.some(i => Number(i.price) > 0 && i.category !== 'free');
 
-  nameEl.textContent = selectedItem.item_name ?? selectedItem.name ?? '不明';
-  priceEl.textContent = isFree ? '無料' : `${Number(selectedItem.price ?? 0).toLocaleString()}pt / ¥${Number(selectedItem.price ?? 0).toLocaleString()}`;
+  nameEl.textContent = names.join('、');
+  priceEl.textContent = allFree ? '無料' : `合計 ${totalPrice.toLocaleString()}pt / ¥${totalPrice.toLocaleString()}（${selectedItems.length}品）`;
 
   bar.classList.add('is-visible');
   bar.setAttribute('aria-hidden', 'false');
@@ -175,36 +179,24 @@ function updateOrderBar() {
 
   // Point button states
   if (pointBtn) {
-    if (isFree) {
+    if (allFree) {
       pointBtn.textContent = '受け取る';
       pointBtn.disabled = false;
-      pointBtn.classList.remove('btn-primary');
-      pointBtn.classList.add('btn-secondary');
     } else if (todayPointUsed) {
       pointBtn.textContent = '本日利用済み';
       pointBtn.disabled = true;
-      pointBtn.classList.add('btn-primary');
-      pointBtn.classList.remove('btn-secondary');
-    } else if (userBalance < (selectedItem.price ?? 0)) {
+    } else if (userBalance < totalPrice) {
       pointBtn.textContent = 'ポイント不足';
       pointBtn.disabled = true;
-      pointBtn.classList.add('btn-primary');
-      pointBtn.classList.remove('btn-secondary');
     } else {
-      pointBtn.textContent = 'ポイント消費';
+      pointBtn.textContent = `${totalPrice}pt で購入`;
       pointBtn.disabled = false;
-      pointBtn.classList.add('btn-primary');
-      pointBtn.classList.remove('btn-secondary');
     }
   }
 
-  // PayPay button visibility
+  // PayPay button
   if (paypayBtn) {
-    if (isFree) {
-      paypayBtn.style.display = 'none';
-    } else {
-      paypayBtn.style.display = '';
-    }
+    paypayBtn.style.display = hasPaid ? '' : 'none';
   }
 }
 
@@ -226,8 +218,8 @@ function handleCategoryClick(e) {
     }
   }
 
-  // Deselect item
-  selectedItem = null;
+  // Deselect items
+  selectedItems = [];
   updateOrderBar();
   renderMenu();
 }
@@ -240,11 +232,12 @@ function handleItemClick(e) {
   const item = menuItems.find((i) => String(i.item_id ?? i.id) === itemId);
   if (!item) return;
 
-  // Toggle selection
-  if (selectedItem?.id === item.id) {
-    selectedItem = null;
+  // Toggle selection（複数選択対応）
+  const idx = selectedItems.findIndex(s => (s.item_id ?? s.id) === (item.item_id ?? item.id));
+  if (idx >= 0) {
+    selectedItems.splice(idx, 1);
   } else {
-    selectedItem = item;
+    selectedItems.push(item);
   }
 
   renderMenu();
@@ -252,47 +245,60 @@ function handleItemClick(e) {
 }
 
 async function handlePointPurchase() {
-  if (!selectedItem) return;
+  if (selectedItems.length === 0) return;
 
-  const itemName = selectedItem.item_name ?? selectedItem.name;
-  const isFree = Number(selectedItem.price) === 0 || selectedItem.category === 'free';
-  const title = isFree ? '受け取り確認' : 'ポイント消費';
-  const message = isFree
-    ? `「${itemName}」を受け取りますか？`
-    : `「${itemName}」を${selectedItem.price}ptで購入しますか？\n残高: ${userBalance}pt → ${userBalance - selectedItem.price}pt`;
+  const names = selectedItems.map(i => i.item_name ?? i.name).join('、');
+  const totalPrice = selectedItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
+  const allFree = selectedItems.every(i => Number(i.price) === 0 || i.category === 'free');
+  const title = allFree ? '受け取り確認' : 'ポイント消費';
+  const message = allFree
+    ? `「${names}」を受け取りますか？`
+    : `「${names}」を合計${totalPrice}ptで購入しますか？\n残高: ${userBalance}pt → ${userBalance - totalPrice}pt`;
 
   const confirmed = await showModal({
     title,
     message,
-    confirmText: isFree ? '受け取る' : '購入する',
+    confirmText: allFree ? '受け取る' : '購入する',
     cancelText: 'キャンセル',
     type: 'primary',
   });
 
   if (!confirmed) return;
 
-  const result = await api.purchase(selectedItem, isFree ? 'free' : 'point');
-  if (result.error) {
-    showToast(result.error, 'error');
-    return;
+  // 各商品を順番に購入
+  let hasError = false;
+  for (const item of selectedItems) {
+    const isFree = Number(item.price) === 0 || item.category === 'free';
+    const result = await api.purchase(item, isFree ? 'free' : 'point');
+    if (result.error) {
+      showToast(result.error, 'error');
+      hasError = true;
+      break;
+    }
   }
 
-  showToast(`${itemName} を${isFree ? '受け取りました' : '購入しました'}`, 'success');
-  selectedItem = null;
+  if (!hasError) {
+    showToast(`${names} を${allFree ? '受け取りました' : '購入しました'}`, 'success');
+  }
+  selectedItems = [];
   updateOrderBar();
 
-  // Refresh data
   await Promise.all([loadMenu(), loadUserState()]);
   renderMenu();
 }
 
 async function handlePaypayPurchase() {
-  if (!selectedItem) return;
+  if (selectedItems.length === 0) return;
 
-  const payItemName = selectedItem.item_name ?? selectedItem.name;
+  const paidItems = selectedItems.filter(i => Number(i.price) > 0 && i.category !== 'free');
+  if (paidItems.length === 0) return;
+
+  const names = paidItems.map(i => i.item_name ?? i.name).join('、');
+  const total = paidItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
+
   const confirmed = await showModal({
     title: 'PayPay で購入',
-    message: `「${payItemName}」を ¥${Number(selectedItem.price).toLocaleString()} で購入します。\nカフェ設置のQRコードをPayPayでスキャンしてください。`,
+    message: `「${names}」を合計 ¥${total.toLocaleString()} で購入します。\nカフェ設置のQRコードをPayPayでスキャンしてください。`,
     confirmText: '購入記録する',
     cancelText: 'キャンセル',
     type: 'warning',
@@ -300,17 +306,22 @@ async function handlePaypayPurchase() {
 
   if (!confirmed) return;
 
-  const result = await api.purchase(selectedItem, 'paypay');
-  if (result.error) {
-    showToast(result.error, 'error');
-    return;
+  let hasError = false;
+  for (const item of paidItems) {
+    const result = await api.purchase(item, 'paypay');
+    if (result.error) {
+      showToast(result.error, 'error');
+      hasError = true;
+      break;
+    }
   }
 
-  showToast(`${payItemName} をPayPayで購入しました`, 'paypay');
-  selectedItem = null;
+  if (!hasError) {
+    showToast(`${names} をPayPayで購入しました`, 'paypay');
+  }
+  selectedItems = [];
   updateOrderBar();
 
-  // Refresh data
   await Promise.all([loadMenu(), loadUserState()]);
   renderMenu();
 }
