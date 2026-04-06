@@ -56,12 +56,13 @@ export async function initApp() {
  */
 async function registerIfNeeded() {
   const result = await api.getUser();
-  if (result.error === 'USER_NOT_FOUND' || result.needsRegistration) {
+  // GASはユーザーが見つからない場合nullを返す
+  if (!result || result === null || result.error || !result.email) {
     const reg = await api.registerUser();
-    if (reg.error) {
-      showToast('ユーザー登録に失敗しました', 'error');
-    } else {
+    if (reg && !reg.error) {
       showToast('ようこそ Connect Cafe へ！', 'success');
+    } else {
+      console.error('[App] Registration failed:', reg?.error);
     }
   }
 }

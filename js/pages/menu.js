@@ -77,7 +77,7 @@ async function loadUserState() {
   if (Array.isArray(txs)) {
     const today = todayJST();
     todayPointUsed = txs.some(
-      (tx) => tx.paymentType === 'point' && (tx.date ?? tx.timestamp ?? '').slice(0, 10) === today
+      (tx) => (tx.payment_type ?? tx.paymentType) === 'point' && (tx.date ?? tx.timestamp ?? '').slice(0, 10) === today
     );
   }
 }
@@ -93,7 +93,7 @@ function renderMenu() {
   let filtered = menuItems;
   if (activeCategory !== 'all') {
     if (activeCategory === 'free') {
-      filtered = menuItems.filter((item) => item.price === 0 || item.isFree);
+      filtered = menuItems.filter((item) => Number(item.price) === 0 || item.category === 'free');
     } else {
       filtered = menuItems.filter((item) => item.category === activeCategory);
     }

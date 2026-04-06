@@ -24,15 +24,19 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function formatAmount(tx) {
-  if (tx.paymentType === 'point') {
-    return `${tx.amount ?? tx.price ?? 0}pt`;
-  }
-  return `¥${Number(tx.amount ?? tx.price ?? 0).toLocaleString()}`;
+function getPaymentType(tx) {
+  return tx.payment_type ?? tx.paymentType ?? '';
 }
 
-function paymentBadge(type) {
-  if (type === 'point') {
+function formatAmount(tx) {
+  if (getPaymentType(tx) === 'point') {
+    return `${tx.points_used ?? tx.price ?? 0}pt`;
+  }
+  return `¥${Number(tx.price ?? 0).toLocaleString()}`;
+}
+
+function paymentBadge(tx) {
+  if (getPaymentType(tx) === 'point') {
     return '<span class="badge badge-green" style="font-size:10px">ポイント</span>';
   }
   return '<span class="badge badge-amber" style="font-size:10px">PayPay</span>';
@@ -50,7 +54,7 @@ async function loadBalance() {
     return;
   }
 
-  const balance = result.balance ?? result.points ?? 0;
+  const balance = result.remaining ?? result.balance ?? result.points ?? 0;
   el.textContent = Number(balance).toLocaleString();
 }
 
@@ -70,12 +74,13 @@ async function loadStats() {
     const txDate = (tx.date ?? tx.timestamp ?? '').slice(0, 7);
     if (txDate !== ym) continue;
 
-    if (tx.paymentType === 'point') {
+    const pType = getPaymentType(tx);
+    if (pType === 'point') {
       pointCount++;
-      pointAmount += Number(tx.amount ?? tx.price ?? 0);
-    } else if (tx.paymentType === 'paypay') {
+      pointAmount += Number(tx.points_used ?? tx.price ?? 0);
+    } else if (pType === 'paypay') {
       paypayCount++;
-      paypayAmount += Number(tx.amount ?? tx.price ?? 0);
+      paypayAmount += Number(tx.price ?? 0);
     }
   }
 
@@ -108,11 +113,12 @@ async function loadRecentHistory() {
 
   listEl.innerHTML = transactions.map((tx) => {
     const emoji = escapeHtml(tx.emoji ?? tx.icon ?? '☕');
-    const name = escapeHtml(tx.itemName ?? tx.name ?? '不明');
+    const name = escapeHtml(tx.item_name ?? tx.itemName ?? tx.name ?? '不明');
     const date = tx.date ?? tx.timestamp ?? '';
     const dateFormatted = date.includes('T') ? formatDateTime(date) : formatDateShort(date);
     const amount = formatAmount(tx);
-    const badge = paymentBadge(tx.paymentType);
+    const badge = paymentBadge(tx);
+    const pType = getPaymentType(tx);
 
     return `
       <div class="tx-item">
@@ -121,7 +127,7 @@ async function loadRecentHistory() {
           <div class="tx-item__name">${name}</div>
           <div class="tx-item__date">${escapeHtml(dateFormatted)} ${badge}</div>
         </div>
-        <div class="tx-item__amount" style="color:${tx.paymentType === 'point' ? 'var(--color-primary)' : 'var(--color-amber)'}">
+        <div class="tx-item__amount" style="color:${pType === 'point' ? 'var(--color-primary)' : 'var(--color-amber)'}">
           -${escapeHtml(amount)}
         </div>
       </div>

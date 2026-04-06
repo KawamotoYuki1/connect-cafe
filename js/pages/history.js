@@ -25,18 +25,24 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function formatAmount(tx) {
-  if (tx.paymentType === 'point' || tx.paymentType === 'free') {
-    return `${tx.amount ?? tx.price ?? 0}pt`;
-  }
-  return `¥${Number(tx.amount ?? tx.price ?? 0).toLocaleString()}`;
+function getPaymentType(tx) {
+  return tx.payment_type ?? tx.paymentType ?? '';
 }
 
-function paymentBadgeHtml(type) {
-  if (type === 'point') {
+function formatAmount(tx) {
+  const pType = getPaymentType(tx);
+  if (pType === 'point' || pType === 'free') {
+    return `${tx.points_used ?? tx.price ?? 0}pt`;
+  }
+  return `¥${Number(tx.price ?? 0).toLocaleString()}`;
+}
+
+function paymentBadgeHtml(tx) {
+  const pType = getPaymentType(tx);
+  if (pType === 'point') {
     return '<span class="badge badge-green">ポイント</span>';
   }
-  if (type === 'free') {
+  if (pType === 'free') {
     return '<span class="badge badge-green">無料</span>';
   }
   return '<span class="badge badge-amber">PayPay</span>';
@@ -68,12 +74,13 @@ function updateSummary() {
     const txYm = (tx.date ?? tx.timestamp ?? '').slice(0, 7);
     if (txYm !== ym) continue;
 
-    if (tx.paymentType === 'point' || tx.paymentType === 'free') {
+    const pType = getPaymentType(tx);
+    if (pType === 'point' || pType === 'free') {
       pointCount++;
-      pointAmount += Number(tx.amount ?? tx.price ?? 0);
-    } else if (tx.paymentType === 'paypay') {
+      pointAmount += Number(tx.points_used ?? tx.price ?? 0);
+    } else if (pType === 'paypay') {
       paypayCount++;
-      paypayAmount += Number(tx.amount ?? tx.price ?? 0);
+      paypayAmount += Number(tx.price ?? 0);
     }
   }
 
@@ -92,9 +99,9 @@ function renderTransactions() {
 
   let filtered = allTransactions;
   if (activeFilter === 'point') {
-    filtered = allTransactions.filter((tx) => tx.paymentType === 'point' || tx.paymentType === 'free');
+    filtered = allTransactions.filter((tx) => { const p = getPaymentType(tx); return p === 'point' || p === 'free'; });
   } else if (activeFilter === 'paypay') {
-    filtered = allTransactions.filter((tx) => tx.paymentType === 'paypay');
+    filtered = allTransactions.filter((tx) => getPaymentType(tx) === 'paypay');
   }
 
   if (filtered.length === 0) {
@@ -110,12 +117,13 @@ function renderTransactions() {
 
   listEl.innerHTML = filtered.map((tx) => {
     const emoji = escapeHtml(tx.emoji ?? tx.icon ?? '☕');
-    const name = escapeHtml(tx.itemName ?? tx.name ?? '不明');
+    const name = escapeHtml(tx.item_name ?? tx.itemName ?? tx.name ?? '不明');
     const rawDate = tx.date ?? tx.timestamp ?? '';
     const dateFormatted = rawDate.includes('T') ? formatDateTime(rawDate) : formatDateShort(rawDate);
     const amount = formatAmount(tx);
-    const badge = paymentBadgeHtml(tx.paymentType);
-    const amountColor = (tx.paymentType === 'point' || tx.paymentType === 'free')
+    const pType = getPaymentType(tx);
+    const badge = paymentBadgeHtml(tx);
+    const amountColor = (pType === 'point' || pType === 'free')
       ? 'var(--color-primary)' : 'var(--color-amber)';
 
     // Date separator
