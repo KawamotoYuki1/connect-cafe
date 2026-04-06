@@ -506,6 +506,118 @@ export const ICONS = {
     <line x1="34" y1="21" x2="34" y2="40" stroke="#1D9E75" stroke-width="2" stroke-linecap="round"/>
   </svg>`,
 
+  // ===== 追加アイコン（倍増分） =====
+
+  iced_coffee: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <path d="M14 8h20l-2 32H16L14 8z" fill="#E8F4FD" stroke="#5B9BD5" stroke-width="2"/>
+    <rect x="18" y="14" width="12" height="4" rx="1" fill="#8B6544" opacity="0.8"/>
+    <rect x="16" y="20" width="4" height="6" rx="2" fill="#D4E8F7" opacity="0.5"/>
+    <rect x="22" y="18" width="4" height="5" rx="2" fill="#D4E8F7" opacity="0.5"/>
+    <line x1="24" y1="4" x2="24" y2="8" stroke="#5B9BD5" stroke-width="2" stroke-linecap="round"/>
+  </svg>`,
+
+  matcha: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <path d="M12 20h24v2c0 8-5 16-12 16s-12-8-12-16v-2z" fill="#A8D5A2" stroke="#5A8F54" stroke-width="2"/>
+    <ellipse cx="24" cy="20" rx="12" ry="3" fill="#C8E6C4" stroke="#5A8F54" stroke-width="1.5"/>
+    <path d="M20 14c0-2 1-3 1-5" stroke="#5A8F54" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+    <path d="M24 13c0-2 1-3 1-5" stroke="#5A8F54" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <path d="M28 14c0-2 1-3 1-5" stroke="#5A8F54" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  </svg>`,
+
+  smoothie: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <path d="M16 12h16l-3 28h-10l-3-28z" fill="#F5A0C0" stroke="#D4607A" stroke-width="2"/>
+    <ellipse cx="24" cy="12" rx="8" ry="2" fill="#F8C0D4" stroke="#D4607A" stroke-width="1.5"/>
+    <circle cx="24" cy="8" r="3" fill="#FF6B6B" stroke="#D4607A" stroke-width="1"/>
+    <line x1="24" y1="5" x2="24" y2="1" stroke="#D4607A" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`,
+
+  soup: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <path d="M8 24c0 0 2 14 16 14s16-14 16-14H8z" fill="#F5DEB3" stroke="#C4963A" stroke-width="2"/>
+    <ellipse cx="24" cy="24" rx="16" ry="4" fill="#FFE4B5" stroke="#C4963A" stroke-width="2"/>
+    <path d="M18 18c0-2 1-3 1-5" stroke="#C4963A" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+    <path d="M24 17c0-2 1-3 1-5" stroke="#C4963A" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    <path d="M30 18c0-2 1-3 1-5" stroke="#C4963A" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  </svg>`,
+
+  salad: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <ellipse cx="24" cy="30" rx="16" ry="10" fill="#E8F5E9" stroke="#4CAF50" stroke-width="2"/>
+    <path d="M14 26c2-4 6-6 10-6s8 2 10 6" fill="#81C784" stroke="#4CAF50" stroke-width="1.5"/>
+    <circle cx="20" cy="24" r="3" fill="#FF6347" stroke="#E53935" stroke-width="1"/>
+    <circle cx="28" cy="25" r="2" fill="#FFA726" stroke="#F57C00" stroke-width="1"/>
+  </svg>`,
+
+  hamburger: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <path d="M10 22h28c0-8-6-12-14-12S10 14 10 22z" fill="#D4845A" stroke="#8B5E3C" stroke-width="2"/>
+    <rect x="10" y="22" width="28" height="4" fill="#4CAF50"/>
+    <rect x="10" y="26" width="28" height="3" fill="#C62828"/>
+    <rect x="10" y="29" width="28" height="3" fill="#FFB74D"/>
+    <path d="M10 32h28c0 0 0 6-14 6S10 32 10 32z" fill="#D4845A" stroke="#8B5E3C" stroke-width="2"/>
+    <circle cx="16" cy="18" r="1" fill="#F5DEB3" opacity="0.6"/>
+    <circle cx="24" cy="16" r="1" fill="#F5DEB3" opacity="0.6"/>
+    <circle cx="32" cy="18" r="1" fill="#F5DEB3" opacity="0.6"/>
+  </svg>`,
+
+  donut: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <circle cx="24" cy="24" r="14" fill="#F5A0C0" stroke="#D4607A" stroke-width="2"/>
+    <circle cx="24" cy="24" r="5" fill="#F9F8F5" stroke="#D4607A" stroke-width="1.5"/>
+    <path d="M12 20c2-4 6-6 12-6s10 2 12 6" fill="#FF69B4" opacity="0.5" stroke="#D4607A" stroke-width="1"/>
+    <circle cx="18" cy="18" r="1.5" fill="#FFD700"/>
+    <circle cx="26" cy="16" r="1.5" fill="#87CEEB"/>
+    <circle cx="30" cy="20" r="1.5" fill="#98FB98"/>
+  </svg>`,
+
+  cake: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <rect x="10" y="24" width="28" height="14" rx="3" fill="#F5DEB3" stroke="#C4963A" stroke-width="2"/>
+    <rect x="10" y="20" width="28" height="6" rx="2" fill="#FF69B4" stroke="#D4607A" stroke-width="1.5"/>
+    <line x1="24" y1="14" x2="24" y2="20" stroke="#C4963A" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="24" cy="12" r="2" fill="#FF6347" opacity="0.8"/>
+  </svg>`,
+
+  candy: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <circle cx="24" cy="24" r="10" fill="#FF6B6B" stroke="#CC3333" stroke-width="2"/>
+    <path d="M24 14c0 0-6 1-10 5" stroke="#CC3333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M24 34c0 0 6-1 10-5" stroke="#CC3333" stroke-width="3" stroke-linecap="round"/>
+    <path d="M18 20l12 8" stroke="#fff" stroke-width="2" opacity="0.3"/>
+  </svg>`,
+
+  beer: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <rect x="12" y="14" width="18" height="26" rx="3" fill="#FFD54F" stroke="#F9A825" stroke-width="2"/>
+    <path d="M30 18c4 0 6 3 6 6s-2 6-6 6" stroke="#F9A825" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <ellipse cx="21" cy="14" rx="9" ry="3" fill="#FFF9C4" stroke="#F9A825" stroke-width="1.5"/>
+    <rect x="16" y="22" width="2" height="10" rx="1" fill="#FFF9C4" opacity="0.5"/>
+  </svg>`,
+
+  wine: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <path d="M16 8h16v6c0 6-4 10-8 10s-8-4-8-10V8z" fill="#C62828" stroke="#8E1818" stroke-width="2"/>
+    <line x1="24" y1="24" x2="24" y2="36" stroke="#8E1818" stroke-width="2"/>
+    <ellipse cx="24" cy="38" rx="8" ry="2" fill="none" stroke="#8E1818" stroke-width="2"/>
+    <path d="M18 12h12" stroke="#E57373" stroke-width="1.5" opacity="0.5"/>
+  </svg>`,
+
+  egg: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <ellipse cx="24" cy="26" rx="12" ry="14" fill="#FFF9C4" stroke="#F9A825" stroke-width="2"/>
+    <ellipse cx="24" cy="28" rx="6" ry="6" fill="#FFD54F" opacity="0.7"/>
+  </svg>`,
+
+  bread: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <path d="M8 28c0-8 4-16 16-16s16 8 16 16v6c0 2-2 4-4 4H12c-2 0-4-2-4-4v-6z" fill="#D4845A" stroke="#8B5E3C" stroke-width="2"/>
+    <path d="M16 28v-8c0-4 4-6 8-6s8 2 8 6v8" stroke="#8B5E3C" stroke-width="1.5" opacity="0.3"/>
+  </svg>`,
+
+  fruit: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <circle cx="20" cy="28" r="10" fill="#FF6347" stroke="#CC3333" stroke-width="2"/>
+    <circle cx="30" cy="24" r="8" fill="#FFA726" stroke="#F57C00" stroke-width="2"/>
+    <path d="M22 18c-2-4 0-8 2-10" stroke="#4CAF50" stroke-width="2" stroke-linecap="round"/>
+    <path d="M24 10c2 2 4 2 6 0" stroke="#4CAF50" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`,
+
+  icecream: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+    <path d="M18 24l6 18 6-18" fill="#D4845A" stroke="#8B5E3C" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="24" cy="20" r="8" fill="#FF69B4" stroke="#D4607A" stroke-width="2"/>
+    <circle cx="20" cy="16" r="5" fill="#FFF9C4" stroke="#F9A825" stroke-width="1.5"/>
+    <circle cx="28" cy="18" r="4" fill="#A8D5A2" stroke="#5A8F54" stroke-width="1.5"/>
+  </svg>`,
+
 };
 
 
@@ -534,21 +646,21 @@ export function getIconCategories() {
     {
       label: 'ドリンク',
       icons: [
-        'water', 'coffee', 'tea', 'hot_water',
+        'water', 'coffee', 'iced_coffee', 'matcha', 'tea', 'hot_water',
         'cola', 'cola_zero', 'energy_drink',
-        'milk', 'orange_juice', 'juice',
+        'milk', 'orange_juice', 'juice', 'smoothie', 'beer', 'wine',
       ],
     },
     {
       label: 'おやつ',
-      icons: ['snack', 'cookie', 'chocolate', 'chips'],
+      icons: ['snack', 'cookie', 'chocolate', 'chips', 'donut', 'cake', 'candy', 'icecream', 'fruit'],
     },
     {
       label: '食事',
       icons: [
         'rice', 'noodle', 'curry_noodle', 'udon', 'soba',
         'yakisoba', 'curry', 'gyudon', 'pizza',
-        'bento', 'onigiri', 'sandwich',
+        'bento', 'onigiri', 'sandwich', 'hamburger', 'soup', 'salad', 'bread', 'egg',
       ],
     },
     {

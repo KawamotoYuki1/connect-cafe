@@ -220,41 +220,46 @@ function injectItemModal() {
   const overlay = document.createElement('div');
   overlay.id = 'item-modal-overlay';
   overlay.className = 'modal-overlay';
+  const inputStyle = 'width:100%;padding:10px 12px;border:1px solid #D3D1C7;border-radius:8px;font-size:14px;background:#fff;outline:none;box-sizing:border-box;';
+  const labelStyle = 'display:block;font-size:12px;font-weight:600;color:#5F5E5A;margin-bottom:6px;';
+
   overlay.innerHTML = `
-    <div class="modal" style="max-width: 420px; width: 90%;">
-      <div class="modal__header">
-        <h3 class="modal__title" id="item-modal-title">商品追加</h3>
+    <div class="modal" style="max-width: 480px; width: 92%; max-height: 90vh; overflow-y: auto;">
+      <div style="padding:20px 24px 0">
+        <h3 style="font-size:18px;font-weight:700;margin:0 0 20px" id="item-modal-title">商品追加</h3>
       </div>
-      <div class="modal__body">
-        <div style="display: flex; flex-direction: column; gap: var(--space-3)">
-          <label class="form-label">
-            商品名 <span style="color: var(--color-danger, #DC2626)">*</span>
-            <input type="text" id="item-modal-name" class="form-input" placeholder="例: アイスコーヒー" />
-          </label>
-          <label class="form-label">
-            カテゴリ <span style="color: var(--color-danger, #DC2626)">*</span>
-            <select id="item-modal-category" class="form-input">
-              ${CATEGORIES.map((c) => `<option value="${c.value}">${c.label}</option>`).join('')}
-            </select>
-          </label>
-          <label class="form-label">
-            価格（円）
-            <input type="number" id="item-modal-price" class="form-input" min="0" value="0" />
-          </label>
-          <div class="form-label">
-            アイコン
-            <input type="hidden" id="item-modal-emoji" />
-            <div id="item-modal-icon-picker" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; max-height:200px; overflow-y:auto; padding:8px; background:#F9F8F5; border-radius:12px;"></div>
+      <div style="padding:0 24px 20px">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div>
+            <label style="${labelStyle}">商品名 <span style="color:#DC2626">*</span></label>
+            <input type="text" id="item-modal-name" style="${inputStyle}" placeholder="例: アイスコーヒー" />
           </div>
-          <label class="form-label" id="item-modal-stock-label">
-            初期在庫数（-1 = 無制限）
-            <input type="number" id="item-modal-stock" class="form-input" min="-1" value="-1" />
-          </label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="${labelStyle}">カテゴリ <span style="color:#DC2626">*</span></label>
+              <select id="item-modal-category" style="${inputStyle}cursor:pointer;">
+                ${CATEGORIES.map((c) => `<option value="${c.value}">${c.label}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label style="${labelStyle}">価格（円）</label>
+              <input type="number" id="item-modal-price" style="${inputStyle}" min="0" value="0" />
+            </div>
+          </div>
+          <div>
+            <label style="${labelStyle}">アイコン</label>
+            <input type="hidden" id="item-modal-emoji" />
+            <div id="item-modal-icon-picker" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:6px;max-height:240px;overflow-y:auto;padding:12px;background:#F9F8F5;border:1px solid #E0DED8;border-radius:12px;"></div>
+          </div>
+          <div id="item-modal-stock-label">
+            <label style="${labelStyle}">初期在庫数（-1 = 無制限）</label>
+            <input type="number" id="item-modal-stock" style="${inputStyle}" min="-1" value="-1" />
+          </div>
         </div>
       </div>
-      <div class="modal__footer" style="display: flex; gap: var(--space-2); justify-content: flex-end;">
-        <button class="btn btn-secondary" id="item-modal-cancel">キャンセル</button>
-        <button class="btn btn-primary" id="item-modal-confirm">追加する</button>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding:16px 24px;border-top:1px solid #E0DED8">
+        <button class="btn btn-secondary" id="item-modal-cancel" style="padding:10px 20px">キャンセル</button>
+        <button class="btn btn-primary" id="item-modal-confirm" style="padding:10px 24px">追加する</button>
       </div>
     </div>
   `;
@@ -436,10 +441,11 @@ function openItemModal(mode, itemId) {
     const categories = getIconCategories();
     const currentKey = mode === 'edit' ? (menuItems.find(i => i.item_id === itemId)?.icon_svg || '') : '';
     picker.innerHTML = categories.map(cat => {
-      return `<div style="width:100%;font-size:11px;font-weight:600;color:var(--color-text-secondary,#666);margin-top:4px">${cat.label}</div>` +
+      return `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:#888;margin-top:6px;padding-bottom:4px;border-bottom:1px solid #E0DED8">${cat.label}</div>` +
         cat.icons.map(key => {
-          const selected = key === currentKey ? 'outline:2px solid var(--color-primary,#1D9E75);border-radius:8px;' : '';
-          return `<div class="icon-pick" data-icon-key="${key}" style="cursor:pointer;padding:4px;${selected}" title="${key}">${getIcon(key, 28)}</div>`;
+          const isSelected = key === currentKey;
+          const bg = isSelected ? 'background:#E1F5EE;outline:2px solid #1D9E75;' : 'background:#fff;';
+          return `<div class="icon-pick" data-icon-key="${key}" style="cursor:pointer;padding:6px;border-radius:10px;display:flex;align-items:center;justify-content:center;${bg}transition:all 0.1s" title="${key}">${getIcon(key, 32)}</div>`;
         }).join('');
     }).join('');
 
@@ -447,9 +453,9 @@ function openItemModal(mode, itemId) {
       const el = e.target.closest('[data-icon-key]');
       if (!el) return;
       emojiInput.value = el.dataset.iconKey;
-      picker.querySelectorAll('.icon-pick').forEach(p => p.style.outline = '');
-      el.style.outline = '2px solid var(--color-primary,#1D9E75)';
-      el.style.borderRadius = '8px';
+      picker.querySelectorAll('.icon-pick').forEach(p => { p.style.outline = ''; p.style.background = '#fff'; });
+      el.style.outline = '2px solid #1D9E75';
+      el.style.background = '#E1F5EE';
     };
 
     if (currentKey) emojiInput.value = currentKey;
