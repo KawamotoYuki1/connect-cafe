@@ -144,12 +144,36 @@
       flex-shrink: 0;
     }
 
-    /* ---- Menu Item Emoji ---- */
+    /* ---- Menu Item Layout (アイコン左・テキスト右) ---- */
+    .menu-item__inner {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
     .menu-item__emoji {
-      font-size: 2.25rem;
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
       line-height: 1;
-      margin-bottom: var(--space-2);
-      display: block;
+    }
+    .menu-item__emoji svg {
+      width: 48px;
+      height: 48px;
+    }
+    .menu-item__text {
+      flex: 1;
+      min-width: 0;
+    }
+    .menu-item__name {
+      font-size: var(--text-sm, 13px) !important;
+      margin-bottom: 2px !important;
+    }
+    .menu-item__price {
+      font-size: var(--text-sm, 13px) !important;
     }
 
     /* ---- Order Bar Layout ---- */
@@ -593,22 +617,23 @@
       </div>
     </div>
 
-    <!-- Order Bar -->
-    <div class="order-bar" id="order-bar" role="region" aria-label="注文バー" aria-hidden="true">
-      <div class="order-bar__info">
-        <div class="order-bar__name" id="order-bar-name"></div>
-        <div class="order-bar__price" id="order-bar-price"></div>
-      </div>
-      <div class="order-bar__buttons">
-        <button class="btn btn-sm btn-primary" id="order-btn-point" type="button">
-          ポイント消費
-        </button>
-        <button class="btn btn-sm btn-paypay" id="order-btn-paypay" type="button">
-          PayPay 購入
-        </button>
-      </div>
-    </div>
   </main>
+
+  <!-- Order Bar (ページ外に配置 - position:fixedで常に表示) -->
+  <div class="order-bar auth-only" id="order-bar" role="region" aria-label="注文バー" aria-hidden="true">
+    <div class="order-bar__info">
+      <div class="order-bar__name" id="order-bar-name"></div>
+      <div class="order-bar__price" id="order-bar-price"></div>
+    </div>
+    <div class="order-bar__buttons">
+      <button class="btn btn-sm btn-primary" id="order-btn-point" type="button">
+        ポイント消費
+      </button>
+      <button class="btn btn-sm btn-paypay" id="order-btn-paypay" type="button">
+        PayPay 購入
+      </button>
+    </div>
+  </div>
 
   <!-- ============================================================
        Page: History
