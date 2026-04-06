@@ -48,11 +48,12 @@ function renderStatCards(data) {
   if (!container) return;
 
   const stats = data.error ? {} : data;
-  const transactions = stats.totalTransactions ?? 0;
-  const pointCount = stats.pointCount ?? 0;
-  const pointTotal = stats.pointTotal ?? 0;
-  const paypayCount = stats.paypayCount ?? 0;
-  const paypayTotal = stats.paypayTotal ?? 0;
+  const bp = stats.byPayment || {};
+  const transactions = stats.transactionCount ?? stats.totalTransactions ?? 0;
+  const pointCount = bp.point?.count ?? stats.pointCount ?? 0;
+  const pointTotal = stats.totalPointsUsed ?? bp.point?.total ?? stats.pointTotal ?? 0;
+  const paypayCount = bp.paypay?.count ?? stats.paypayCount ?? 0;
+  const paypayTotal = bp.paypay?.total ?? stats.paypayTotal ?? 0;
   const lowStockCount = stats.lowStockCount ?? 0;
 
   container.innerHTML = `
