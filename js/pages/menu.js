@@ -261,9 +261,7 @@ function handleCategoryClick(e) {
     }
   }
 
-  // Deselect items
-  selectedItems = [];
-  updateOrderBar();
+  // カテゴリ切替時にカートは保持（リセットしない）
   renderMenu();
 }
 
