@@ -1,0 +1,152 @@
+/* ============================================================
+   Connect Cafe - Design Tokens
+   Corporate internal cafe ordering app
+   ============================================================ */
+
+:root {
+  /* ---- Brand Colors ---- */
+  --color-primary:        #1D9E75;
+  --color-primary-dark:   #168A65;
+  --color-primary-darker: #085041;
+  --color-primary-light:  #9FE1CB;
+  --color-primary-lighter:#E1F5EE;
+  --color-primary-ghost:  #F0FAF5;
+
+  /* ---- Amber / PayPay ---- */
+  --color-amber:          #BA7517;
+  --color-amber-dark:     #9A6112;
+  --color-amber-light:    #FAC775;
+  --color-amber-lighter:  #FAEEDA;
+  --color-amber-ghost:    #FDF7EC;
+
+  /* ---- Status ---- */
+  --color-success:        #1D9E75;
+  --color-warning:        #BA7517;
+  --color-danger:         #C4453A;
+  --color-danger-light:   #FBEAE8;
+  --color-info:           #3B82B8;
+  --color-info-light:     #E8F2FA;
+
+  /* ---- Neutrals (warm gray) ---- */
+  --color-text:           #2C2C2A;
+  --color-text-secondary: #5F5E5A;
+  --color-text-tertiary:  #888780;
+  --color-text-placeholder:#B0AFA8;
+  --color-text-inverse:   #FFFFFF;
+
+  --color-bg:             #FFFFFF;
+  --color-bg-warm:        #F9F8F5;
+  --color-bg-muted:       #F4F2EE;
+  --color-bg-overlay:     rgba(44, 44, 42, 0.45);
+
+  --color-border:         #E0DED8;
+  --color-border-light:   #ECEAE5;
+  --color-divider:        #ECEAE5;
+
+  /* ---- Typography ---- */
+  --font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+                 "Noto Sans JP", -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, sans-serif;
+  --font-mono:   "SF Mono", "Fira Code", "Noto Sans Mono CJK JP",
+                 ui-monospace, monospace;
+
+  --text-xs:   0.6875rem;  /* 11px */
+  --text-sm:   0.8125rem;  /* 13px */
+  --text-base: 0.9375rem;  /* 15px */
+  --text-md:   1rem;       /* 16px */
+  --text-lg:   1.125rem;   /* 18px */
+  --text-xl:   1.375rem;   /* 22px */
+  --text-2xl:  1.75rem;    /* 28px */
+
+  --leading-tight:  1.3;
+  --leading-normal: 1.6;
+  --leading-loose:  1.8;
+
+  --weight-normal:   400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.02em;
+
+  /* ---- Spacing (4px base) ---- */
+  --space-0:   0;
+  --space-1:   0.25rem;   /* 4px */
+  --space-2:   0.5rem;    /* 8px */
+  --space-3:   0.75rem;   /* 12px */
+  --space-4:   1rem;      /* 16px */
+  --space-5:   1.25rem;   /* 20px */
+  --space-6:   1.5rem;    /* 24px */
+  --space-8:   2rem;      /* 32px */
+  --space-10:  2.5rem;    /* 40px */
+  --space-12:  3rem;      /* 48px */
+  --space-16:  4rem;      /* 64px */
+  --space-20:  5rem;      /* 80px */
+
+  /* ---- Border Radius ---- */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-pill:  999px;
+  --radius-round: 50%;
+
+  /* ---- Shadows (warm-tinted) ---- */
+  --shadow-xs:   0 1px 2px rgba(44, 44, 42, 0.04);
+  --shadow-sm:   0 1px 3px rgba(44, 44, 42, 0.06),
+                 0 1px 2px rgba(44, 44, 42, 0.04);
+  --shadow-md:   0 4px 12px rgba(44, 44, 42, 0.07),
+                 0 1px 3px rgba(44, 44, 42, 0.04);
+  --shadow-lg:   0 8px 24px rgba(44, 44, 42, 0.09),
+                 0 2px 6px rgba(44, 44, 42, 0.04);
+  --shadow-xl:   0 16px 48px rgba(44, 44, 42, 0.12),
+                 0 4px 12px rgba(44, 44, 42, 0.06);
+  --shadow-float:0 12px 32px rgba(44, 44, 42, 0.14),
+                 0 2px 8px rgba(44, 44, 42, 0.06);
+  --shadow-inner:inset 0 1px 3px rgba(44, 44, 42, 0.06);
+
+  /* ---- Transitions ---- */
+  --ease-out:     cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out:  cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --duration-fast:   120ms;
+  --duration-normal: 200ms;
+  --duration-slow:   350ms;
+  --duration-page:   400ms;
+
+  --transition-colors: color var(--duration-normal) var(--ease-out),
+                        background-color var(--duration-normal) var(--ease-out),
+                        border-color var(--duration-normal) var(--ease-out);
+  --transition-transform: transform var(--duration-normal) var(--ease-out);
+  --transition-shadow: box-shadow var(--duration-normal) var(--ease-out);
+  --transition-opacity: opacity var(--duration-normal) var(--ease-out);
+
+  /* ---- Z-Index Scale ---- */
+  --z-base:     0;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-header:   300;
+  --z-overlay:  400;
+  --z-modal:    500;
+  --z-toast:    600;
+  --z-tooltip:  700;
+
+  /* ---- Layout ---- */
+  --header-height: 56px;
+  --tab-bar-height: 64px;
+  --container-sm:  480px;
+  --container-md:  640px;
+  --container-lg:  960px;
+  --container-xl:  1120px;
+  --safe-bottom:   env(safe-area-inset-bottom, 0px);
+}
+
+/* ---- Breakpoint Reference (used via @media) ----
+   sm:  480px   - Large phone
+   md:  640px   - Tablet portrait
+   lg:  960px   - Tablet landscape / small desktop
+   xl:  1120px  - Desktop
+   ------------------------------------------------ */
