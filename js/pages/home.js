@@ -6,6 +6,10 @@
 import { api } from '../api.js';
 import { isLoggedIn } from '../auth.js';
 import { formatDateShort, formatDateTime, currentYearMonth, isToday } from '../utils/date-utils.js';
+import { getIcon } from '../icons.js';
+
+// メニューデータキャッシュ（アイコン紐づけ用）
+let menuCache = [];
 
 // ---- DOM References ----
 const pointsEl = () => document.getElementById('home-points');
@@ -29,16 +33,16 @@ function getPaymentType(tx) {
 }
 
 function formatAmount(tx) {
-  if (getPaymentType(tx) === 'point') {
-    return `${tx.points_used ?? tx.price ?? 0}pt`;
-  }
+  const pType = getPaymentType(tx);
+  if (pType === 'free') return '0pt';
+  if (pType === 'point') return `${tx.points_used ?? tx.price ?? 0}pt`;
   return `¥${Number(tx.price ?? 0).toLocaleString()}`;
 }
 
 function paymentBadge(tx) {
-  if (getPaymentType(tx) === 'point') {
-    return '<span class="badge badge-green" style="font-size:10px">ポイント</span>';
-  }
+  const pType = getPaymentType(tx);
+  if (pType === 'free') return '<span class="badge badge-green" style="font-size:10px">FREE</span>';
+  if (pType === 'point') return '<span class="badge badge-green" style="font-size:10px">ポイント</span>';
   return '<span class="badge badge-amber" style="font-size:10px">PayPay</span>';
 }
 
@@ -112,7 +116,10 @@ async function loadRecentHistory() {
   if (emptyEl) emptyEl.style.display = 'none';
 
   listEl.innerHTML = transactions.map((tx) => {
-    const emoji = escapeHtml(tx.emoji ?? tx.icon ?? '☕');
+    // メニューデータからアイコンを取得
+    const menuItem = menuCache.find(m => String(m.id ?? m.item_id) === String(tx.item_id ?? tx.itemId));
+    const iconKey = menuItem?.icon_svg ?? menuItem?.iconSvg;
+    const iconHtml = iconKey ? getIcon(iconKey, 24) : escapeHtml(tx.emoji ?? '☕');
     const name = escapeHtml(tx.item_name ?? tx.itemName ?? tx.name ?? '不明');
     const date = tx.date ?? tx.timestamp ?? '';
     const dateFormatted = date.includes('T') ? formatDateTime(date) : formatDateShort(date);
@@ -122,7 +129,7 @@ async function loadRecentHistory() {
 
     return `
       <div class="tx-item">
-        <div class="tx-item__icon">${emoji}</div>
+        <div class="tx-item__icon">${iconHtml}</div>
         <div class="tx-item__info">
           <div class="tx-item__name">${name}</div>
           <div class="tx-item__date">${escapeHtml(dateFormatted)} ${badge}</div>
@@ -144,6 +151,10 @@ async function onPageShow() {
   isLoading = true;
 
   try {
+    // メニューデータをキャッシュ（アイコン紐づけ用）
+    const menuResult = await api.getMenu();
+    if (Array.isArray(menuResult)) menuCache = menuResult;
+
     await Promise.all([
       loadBalance(),
       loadStats(),

@@ -5,6 +5,7 @@
  */
 import { api } from '../api.js';
 import { isLoggedIn } from '../auth.js';
+import { getIcon } from '../icons.js';
 
 // ---- Helpers ----
 
@@ -54,16 +55,17 @@ async function loadMenuTable() {
   });
 
   tbody.innerHTML = sorted.map((item) => {
-    const emoji = escapeHtml(item.emoji ?? item.icon ?? '');
-    const name = escapeHtml(item.name ?? '不明');
+    const iconKey = item.icon_svg ?? item.iconSvg;
+    const iconHtml = iconKey ? getIcon(iconKey, 20) : escapeHtml(item.image_emoji ?? item.emoji ?? '');
+    const name = escapeHtml(item.name ?? item.item_name ?? '不明');
     const category = escapeHtml(getCategoryLabel(item.category));
-    const isFree = item.price === 0 || item.isFree;
+    const isFree = Number(item.price) === 0 || item.category === 'free';
     const price = isFree ? '無料' : `${Number(item.price ?? 0).toLocaleString()}pt`;
 
     return `
       <tr>
         <td><span class="badge badge-gray">${category}</span></td>
-        <td>${emoji} ${name}</td>
+        <td style="display:flex;align-items:center;gap:6px">${iconHtml} ${name}</td>
         <td style="font-weight:var(--weight-semibold);color:${isFree ? 'var(--color-primary)' : 'var(--color-text)'}">${price}</td>
       </tr>
     `;
