@@ -261,7 +261,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: var(--header-height);
+  height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
   background: var(--color-primary-darker);
   color: var(--color-text-inverse);
   display: flex;

@@ -141,10 +141,11 @@ function renderMenu() {
       <div class="${classes}" data-item-id="${escapeHtml(String(itemId))}" role="listitem" tabindex="0"
            aria-label="${name} ${price}" ${isOutOfStock ? 'aria-disabled="true"' : ''}>
         <span class="menu-item__emoji" aria-hidden="true">${iconHtml}</span>
-        <div class="menu-item__name">${name}</div>
-        <div class="menu-item__price">${price}</div>
-        ${stockBadge}
-        ${priceBadge}
+        <div class="menu-item__text">
+          <div class="menu-item__name">${name}</div>
+          <div class="menu-item__price">${price} ${stockBadge}${priceBadge}</div>
+        </div>
+        <span class="menu-item__add" aria-label="${isSelected ? '選択解除' : '追加'}">${isSelected ? '✓' : '+'}</span>
       </div>
     `;
   }).join('');

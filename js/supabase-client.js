@@ -18,7 +18,7 @@ let supabase = null;
  * Dynamically load the Supabase JS client from CDN and initialize.
  * @returns {Promise<import('@supabase/supabase-js').SupabaseClient>}
  */
-async function getSupabase() {
+export async function getSupabase() {
   if (supabase) return supabase;
 
   if (!window.supabase?.createClient) {
@@ -102,8 +102,9 @@ function setPersistentCache(action, data) {
 // Supabase returns snake_case column names. Add camelCase aliases for frontend compatibility.
 
 const FIELD_ALIASES = {
-  item_id: 'id',
-  item_name: 'name',
+  // DB column → frontend alias (DB returns `name`, frontend expects `item_name`)
+  id: 'item_id',
+  name: 'item_name',
   stock_count: 'stock',
   image_emoji: 'emoji',
   is_available: 'available',
@@ -677,9 +678,16 @@ export const api = {
     invalidateCache(['getMenu']);
     const sb = await sbReady;
 
+    // Map frontend field names to DB column names
+    const dbUpdates = { ...updates, updated_at: new Date().toISOString() };
+    if ('item_name' in dbUpdates) {
+      dbUpdates.name = dbUpdates.item_name;
+      delete dbUpdates.item_name;
+    }
+
     const { data, error } = await sb
       .from('menu_items')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(dbUpdates)
       .eq('id', itemId)
       .select()
       .single();
@@ -695,13 +703,14 @@ export const api = {
     const { data, error } = await sb
       .from('menu_items')
       .insert({
-        name: item.name,
+        name: item.item_name ?? item.name,
         category: item.category || 'meal',
         price: item.price || 0,
         is_available: item.is_available ?? true,
         stock_count: item.stock_count ?? 0,
         sort_order: item.sort_order ?? 99,
         image_emoji: item.image_emoji || '🆕',
+        icon_svg: item.icon_svg || null,
       })
       .select()
       .single();

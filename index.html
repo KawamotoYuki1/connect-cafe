@@ -6,6 +6,9 @@
   <meta name="theme-color" content="#085041">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="assets/icon-192.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icon-192.svg">
+  <link rel="manifest" href="manifest.json">
   <title>Connect Cafe</title>
 
   <!-- CSS -->
@@ -144,36 +147,71 @@
       flex-shrink: 0;
     }
 
-    /* ---- Menu Item Layout (アイコン左・テキスト右) ---- */
-    .menu-item__inner {
-      display: flex;
+    /* ---- Menu: 1列リスト表示（スマホ向け） ---- */
+    #menu-grid {
+      display: flex !important;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+    .menu-item {
+      display: flex !important;
       align-items: center;
       gap: var(--space-3);
+      padding: var(--space-3) var(--space-4) !important;
     }
     .menu-item__emoji {
       flex-shrink: 0;
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
+      font-size: 1.8rem;
       line-height: 1;
     }
     .menu-item__emoji svg {
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
     }
     .menu-item__text {
       flex: 1;
       min-width: 0;
     }
     .menu-item__name {
-      font-size: var(--text-sm, 13px) !important;
+      font-size: var(--text-base, 15px) !important;
+      font-weight: 600 !important;
       margin-bottom: 2px !important;
     }
     .menu-item__price {
       font-size: var(--text-sm, 13px) !important;
+      color: var(--color-primary);
+    }
+    .menu-item__add {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--color-primary);
+      background: var(--color-primary-lighter, #E1F5EE);
+      color: var(--color-primary);
+      font-size: 1.2rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .menu-item__add:active {
+      transform: scale(0.9);
+    }
+    .menu-item.is-selected .menu-item__add {
+      background: var(--color-primary);
+      color: white;
+    }
+    .menu-item.is-disabled .menu-item__add {
+      opacity: 0.3;
+      pointer-events: none;
     }
 
     /* ---- Order Bar Layout ---- */

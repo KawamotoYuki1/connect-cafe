@@ -86,10 +86,10 @@ function renderInventoryTable() {
   tbody.innerHTML = menuItems.map((item, idx) => {
     const stock = item.stock_count ?? -1;
     const isUnlimited = stock === -1;
-    const isAvailable = item.is_available === 'TRUE';
+    const isAvailable = !!item.is_available;
 
     return `
-      <tr data-item-id="${escapeAttr(item.item_id)}" style="cursor: pointer">
+      <tr data-item-id="${escapeAttr(item.id)}" style="cursor: pointer">
         <td class="text-center" style="white-space: nowrap; width: 60px;">
           <div style="display: flex; flex-direction: column; gap: 2px; align-items: center;">
             <button class="btn btn-secondary btn-sm reorder-btn" data-move="up" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''} title="上に移動" style="padding: 2px 6px; font-size: 0.7rem; line-height: 1;">▲</button>
@@ -99,7 +99,7 @@ function renderInventoryTable() {
         <td data-action="edit">
           <div style="display:flex; align-items:center; gap: var(--space-2)">
             <span style="font-size: 1.2rem">${item.icon_svg ? getIcon(item.icon_svg, 24) : (item.image_emoji || '')}</span>
-            <span style="font-weight: var(--weight-medium)">${escapeHtml(item.item_name)}</span>
+            <span style="font-weight: var(--weight-medium)">${escapeHtml(item.name || item.item_name || '')}</span>
           </div>
         </td>
         <td data-action="edit"><span class="badge">${escapeHtml(categoryLabel(item.category))}</span></td>
@@ -111,14 +111,14 @@ function renderInventoryTable() {
         </td>
         <td class="text-center">
           ${isAvailable
-            ? '<span class="badge badge-green">販売中</span>'
-            : '<span class="badge badge-gray">停止中</span>'}
+            ? '<span class="badge badge-green">公開中</span>'
+            : '<span class="badge badge-gray">非公開</span>'}
         </td>
         <td class="text-center">
           <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-2); flex-wrap: nowrap;">
-            ${!isUnlimited ? `<button class="btn btn-secondary btn-sm" data-restock-item="${escapeAttr(item.item_id)}" data-restock-name="${escapeAttr(item.item_name)}" style="white-space:nowrap">入荷</button>` : ''}
-            <button class="btn btn-secondary btn-sm" data-edit-item="${escapeAttr(item.item_id)}" style="white-space:nowrap">編集</button>
-            <button class="btn btn-secondary btn-sm" data-delete-item="${escapeAttr(item.item_id)}" data-delete-name="${escapeAttr(item.item_name)}" title="削除" style="color: var(--color-danger, #DC2626); padding: 4px 8px; font-size: 0.75rem;">削除</button>
+            <button class="btn btn-secondary btn-sm" data-restock-item="${escapeAttr(item.id)}" data-restock-name="${escapeAttr(item.name)}" style="white-space:nowrap${isUnlimited ? ';opacity:0.3;pointer-events:none' : ''}">入荷</button>
+            <button class="btn btn-secondary btn-sm" data-edit-item="${escapeAttr(item.id)}" style="white-space:nowrap">編集</button>
+            <button class="btn btn-sm" data-delete-item="${escapeAttr(item.id)}" data-delete-name="${escapeAttr(item.name)}" style="background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;white-space:nowrap;font-size:0.75rem;">削除</button>
           </div>
         </td>
       </tr>
@@ -332,13 +332,13 @@ function setupInventoryEvents() {
 
     const itemId = toggle.dataset.toggleItem;
     const checked = toggle.checked;
-    const item = menuItems.find((i) => i.item_id === itemId);
+    const item = menuItems.find((i) => String(i.id ?? i.item_id) === String(itemId));
 
     toggle.disabled = true;
 
     try {
       const result = await api.updateMenuItem(itemId, {
-        is_available: checked ? 'TRUE' : 'FALSE',
+        is_available: checked,
       });
 
       if (result?.error) {
@@ -346,8 +346,8 @@ function setupInventoryEvents() {
         toggle.checked = !checked;
       } else {
         // ローカルデータも更新
-        if (item) item.is_available = checked ? 'TRUE' : 'FALSE';
-        showToast(`${item?.item_name || '商品'}を${checked ? '販売再開' : '販売停止'}しました`, 'success');
+        if (item) item.is_available = checked;
+        showToast(`${item?.name || item?.item_name || '商品'}を${checked ? '公開' : '非公開に'}しました`, 'success');
       }
     } catch (err) {
       console.error('[Inventory] 販売切替エラー:', err);
@@ -403,12 +403,12 @@ function openItemModal(mode, itemId) {
   const confirmBtn = document.getElementById('item-modal-confirm');
 
   if (mode === 'edit') {
-    const item = menuItems.find((i) => i.item_id === itemId);
+    const item = menuItems.find((i) => String(i.id ?? i.item_id) === String(itemId));
     if (!item) return;
 
     title.textContent = '商品編集';
     confirmBtn.textContent = '保存する';
-    nameInput.value = item.item_name || '';
+    nameInput.value = item.name || item.item_name || '';
     categorySelect.value = item.category || 'drink';
     priceInput.value = item.price ?? 0;
     emojiInput.value = item.image_emoji || '';
@@ -586,7 +586,7 @@ async function handleReorderSave() {
   }
 
   const order = menuItems.map((item, idx) => ({
-    id: item.item_id,
+    id: item.id ?? item.item_id,
     sort_order: idx + 1,
   }));
 
@@ -668,7 +668,7 @@ async function handleRestock() {
     if (result?.error) {
       showToast(`入荷に失敗しました: ${result.error}`, 'error');
     } else {
-      const item = menuItems.find((i) => i.item_id === itemId);
+      const item = menuItems.find((i) => String(i.id ?? i.item_id) === String(itemId));
       showToast(`${item?.item_name || '商品'} を ${quantity}個 入荷しました`, 'success');
       closeRestockModal();
       await loadInventory();

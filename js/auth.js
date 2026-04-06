@@ -5,29 +5,16 @@
  * 旧GIS版: auth-gis-legacy.js に保存済み
  */
 import { CONFIG } from './config.js';
+import { getSupabase } from './supabase-client.js';
 
 // ---------- Internal State ----------
-let supabase = null;
 let userProfile = null;
 let authListeners = [];
 
-// ---------- Supabase SDK ----------
+// ---------- Supabase SDK (shared instance) ----------
 
 async function getSb() {
-  if (supabase) return supabase;
-  // supabase-client.jsが先にロードするため、windowにあるはず
-  if (!window.supabase?.createClient) {
-    await new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-      script.async = true;
-      script.onload = resolve;
-      script.onerror = () => reject(new Error('Failed to load Supabase SDK'));
-      document.head.appendChild(script);
-    });
-  }
-  supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-  return supabase;
+  return getSupabase();
 }
 
 // ---------- Notify Listeners ----------
