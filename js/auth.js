@@ -48,6 +48,12 @@ export async function initAuth() {
     notifyListeners();
   });
 
+  // URLにアクセストークンが含まれている場合（OAuthリダイレクト後）を処理
+  if (window.location.hash && window.location.hash.includes('access_token')) {
+    // Supabase SDKがハッシュからセッションを復元するのを待つ
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+
   // Check existing session
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
@@ -57,6 +63,10 @@ export async function initAuth() {
       picture: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || '',
     };
     notifyListeners();
+    // ハッシュをクリーン（URLからトークンを除去）
+    if (window.location.hash.includes('access_token')) {
+      history.replaceState(null, '', window.location.pathname);
+    }
   }
 }
 
