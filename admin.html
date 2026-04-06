@@ -244,6 +244,7 @@
     /* ---- Admin Pages ---- */
     .admin-page {
       display: none;
+      padding: 0 var(--space-4) var(--space-4);
       animation: page-fade-in var(--duration-page) var(--ease-out) both;
     }
 
@@ -330,7 +331,7 @@
       background: var(--color-bg);
       border: 1px solid var(--color-border-light);
       border-radius: var(--radius-lg);
-      margin-bottom: var(--space-5);
+      margin-bottom: var(--space-4);
       overflow: hidden;
     }
 
@@ -791,6 +792,28 @@
       .admin-grant-form .form-group {
         width: 100%;
       }
+    }
+
+    /* ---- Consistent form inputs for admin ---- */
+    .admin-page input[type="text"],
+    .admin-page input[type="number"],
+    .admin-page input[type="email"],
+    .admin-page input[type="date"],
+    .admin-page select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #D3D1C7;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fff;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.15s ease;
+    }
+    .admin-page input:focus,
+    .admin-page select:focus {
+      border-color: #1D9E75;
+      box-shadow: 0 0 0 2px rgba(29,158,117,0.1);
     }
   </style>
 </head>

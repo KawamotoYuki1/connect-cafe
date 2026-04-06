@@ -32,12 +32,20 @@ export function initDashboard() {
 // ---------- Data Loading ----------
 
 async function loadDashboard() {
-  const [statsResult, historyResult] = await Promise.all([
+  const [statsResult, historyResult, menuResult] = await Promise.all([
     api.getTodayStats(),
     api.getAllHistory(20),
+    api.getMenu(),
   ]);
 
-  renderStatCards(statsResult);
+  // Calculate low stock from menu items
+  const menuItems = Array.isArray(menuResult) ? menuResult : [];
+  const lowStockCount = menuItems.filter(i => {
+    const stock = i.stock_count ?? i.stock ?? -1;
+    return stock !== -1 && stock < 3;
+  }).length;
+
+  renderStatCards({ ...statsResult, lowStockCount });
   renderRecentTable(historyResult);
 }
 
