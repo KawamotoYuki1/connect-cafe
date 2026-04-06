@@ -124,6 +124,92 @@ function syncTable(table) {
   Logger.log(config.sheetName + ': ' + rows.length + '行書き込み完了');
 }
 
+// ===== 月初ポイントリセット =====
+
+/**
+ * 毎月1日に実行: 前月ポイントを期限切れにし、全アクティブユーザーに1,000pt付与
+ */
+function monthlyPointReset() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    Logger.log('エラー: Supabase設定が未完了');
+    return;
+  }
+
+  var now = new Date();
+  var ym = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM');
+
+  // 1. 前月分を期限切れに
+  var expireUrl = SUPABASE_URL + '/rest/v1/point_balances?year_month=neq.' + ym + '&expired=eq.false';
+  UrlFetchApp.fetch(expireUrl, {
+    method: 'patch',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+    },
+    payload: JSON.stringify({ expired: true }),
+    muteHttpExceptions: true,
+  });
+  Logger.log('前月分ポイントを期限切れに設定');
+
+  // 2. 全アクティブユーザーを取得
+  var users = supabaseFetch('users', 'select=email&is_active=eq.true');
+
+  // 3. 今月分が既にあるユーザーを取得
+  var existing = supabaseFetch('point_balances', 'select=email&year_month=eq.' + ym + '&expired=eq.false');
+  var existingEmails = existing.map(function(r) { return r.email; });
+
+  // 4. 未付与ユーザーにポイント付与
+  var granted = 0;
+  for (var i = 0; i < users.length; i++) {
+    if (existingEmails.indexOf(users[i].email) >= 0) continue;
+
+    var insertUrl = SUPABASE_URL + '/rest/v1/point_balances';
+    UrlFetchApp.fetch(insertUrl, {
+      method: 'post',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      payload: JSON.stringify({
+        email: users[i].email,
+        year_month: ym,
+        granted: 1000,
+        used: 0,
+        granted_at: now.toISOString(),
+        expired: false,
+      }),
+      muteHttpExceptions: true,
+    });
+    granted++;
+  }
+
+  Logger.log('月次ポイントリセット完了: ' + ym + ' / ' + granted + '人に1,000pt付与');
+}
+
+/**
+ * 月初トリガーを設定（毎月1日 1:00に実行）
+ */
+function setupMonthlyTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'monthlyPointReset') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+
+  ScriptApp.newTrigger('monthlyPointReset')
+    .timeBased()
+    .onMonthDay(1)
+    .atHour(1)
+    .create();
+
+  Logger.log('毎月1日 1:00 の月次リセットトリガーを設定しました');
+}
+
 // ===== トリガー設定 =====
 
 function setupSyncTrigger() {
