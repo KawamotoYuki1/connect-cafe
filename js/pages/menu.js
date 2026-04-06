@@ -7,6 +7,7 @@ import { api } from '../api.js';
 import { showToast, showModal, formatPrice } from '../app.js';
 import { isLoggedIn } from '../auth.js';
 import { todayJST } from '../utils/date-utils.js';
+import { getIcon } from '../icons.js';
 
 // ---- State ----
 let menuItems = [];
@@ -110,7 +111,9 @@ function renderMenu() {
     const isOutOfStock = stock !== undefined && stock !== -1 && stockNum === 0;
     const isSelected = selectedItems.some(s => (s.item_id ?? s.id) === itemId);
     const isFree = Number(item.price) === 0 || item.category === 'free';
-    const emoji = escapeHtml(item.image_emoji ?? item.emoji ?? item.icon ?? '☕');
+    // SVGアイコンがあればそれを使う、なければ絵文字フォールバック
+    const iconKey = item.icon_svg ?? item.iconSvg;
+    const iconHtml = iconKey ? getIcon(iconKey, 36) : escapeHtml(item.image_emoji ?? item.emoji ?? '☕');
     const name = escapeHtml(itemName);
     const price = isFree ? '無料' : `${Number(item.price ?? 0).toLocaleString()}pt`;
 
@@ -137,7 +140,7 @@ function renderMenu() {
     return `
       <div class="${classes}" data-item-id="${escapeHtml(String(itemId))}" role="listitem" tabindex="0"
            aria-label="${name} ${price}" ${isOutOfStock ? 'aria-disabled="true"' : ''}>
-        <span class="menu-item__emoji" aria-hidden="true">${emoji}</span>
+        <span class="menu-item__emoji" aria-hidden="true">${iconHtml}</span>
         <div class="menu-item__name">${name}</div>
         <div class="menu-item__price">${price}</div>
         ${stockBadge}
