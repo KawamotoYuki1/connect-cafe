@@ -211,6 +211,9 @@ function updateOrderBar() {
       bar.classList.remove('is-visible');
       bar.setAttribute('aria-hidden', 'true');
     }
+    // カート非表示時にpadding戻す
+    const page = document.getElementById('page-menu');
+    if (page) page.style.paddingBottom = '';
     return;
   }
 
@@ -272,6 +275,10 @@ function updateOrderBar() {
 
   bar.classList.add('is-visible');
   bar.setAttribute('aria-hidden', 'false');
+
+  // カート表示時にメニューリストの下に余白を追加（最下部の商品が隠れないように）
+  const page = document.getElementById('page-menu');
+  if (page) page.style.paddingBottom = `calc(var(--tab-bar-height) + var(--safe-bottom) + var(--space-4) + 120px)`;
 
   // ボタン表示
   if (pointBtn) {

@@ -89,8 +89,8 @@ async function loadStats() {
   const ptEl = paypayTotalEl();
   const pcEl = paypayCountEl();
 
-  if (puEl) puEl.textContent = pointCount;
-  if (puSubEl) puSubEl.textContent = `回 (${pointAmount.toLocaleString()}pt)`;
+  if (puEl) puEl.textContent = `${pointAmount.toLocaleString()}pt`;
+  if (puSubEl) puSubEl.textContent = `${pointCount}回利用`;
   if (ptEl) ptEl.textContent = `¥${paypayAmount.toLocaleString()}`;
   if (pcEl) pcEl.textContent = `${paypayCount}回`;
 }

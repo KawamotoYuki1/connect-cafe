@@ -9,7 +9,7 @@ const TOAST_STYLES = {
   paypay:  { bg: '#D97706', icon: '\uD83D\uDCB0' },
 };
 
-const DEFAULT_DURATION = 3000;
+const DEFAULT_DURATION = 4000;
 
 let container = null;
 
@@ -23,8 +23,9 @@ function getContainer() {
   container.id = 'toast-container';
   Object.assign(container.style, {
     position: 'fixed',
-    top: '20px',
-    right: '20px',
+    bottom: 'calc(140px + env(safe-area-inset-bottom, 0px))',
+    left: '50%',
+    transform: 'translateX(-50%)',
     zIndex: '10000',
     display: 'flex',
     flexDirection: 'column',
