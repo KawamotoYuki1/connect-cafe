@@ -136,7 +136,7 @@ function renderMenu() {
     // 価格
     const priceHtml = isFree
       ? '<span class="menu-item__price menu-item__price--free">FREE</span>'
-      : `<span class="menu-item__price">${Number(item.price).toLocaleString()}<small style="font-size:10px;font-weight:400;opacity:0.6">pt</small></span>`;
+      : `<span class="menu-item__price">${Number(item.price).toLocaleString()}<small>pt</small></span>`;
 
     // カテゴリ区切り
     let separator = '';
@@ -156,8 +156,10 @@ function renderMenu() {
            aria-label="${escapeHtml(itemName)} ${isFree ? '無料' : item.price + 'pt'}" ${isOutOfStock ? 'aria-disabled="true"' : ''}>
         <div class="menu-item__icon">${iconInner}</div>
         <div class="menu-item__body">
-          <div class="menu-item__name">${escapeHtml(itemName)}</div>
-          <div class="menu-item__meta">${stockHtml}</div>
+          <div class="menu-item__name-row">
+            <span class="menu-item__name">${escapeHtml(itemName)}</span>
+            ${stockHtml}
+          </div>
         </div>
         ${priceHtml}
         <button class="menu-item__cart-btn" aria-label="${isSelected ? '選択解除' : 'カートに追加'}">
