@@ -6,6 +6,7 @@
 import { api } from '../api.js';
 import { formatPrice } from '../app.js';
 import { showToast, showModal } from './admin-app.js';
+import { ICONS, getIcon, getIconCategories } from '../icons.js';
 
 // ---------- 定数 ----------
 
@@ -97,7 +98,7 @@ function renderInventoryTable() {
         </td>
         <td data-action="edit">
           <div style="display:flex; align-items:center; gap: var(--space-2)">
-            <span style="font-size: 1.2rem">${item.image_emoji || ''}</span>
+            <span style="font-size: 1.2rem">${item.icon_svg ? getIcon(item.icon_svg, 24) : (item.image_emoji || '')}</span>
             <span style="font-weight: var(--weight-medium)">${escapeHtml(item.item_name)}</span>
           </div>
         </td>
@@ -114,13 +115,10 @@ function renderInventoryTable() {
             : '<span class="badge badge-gray">停止中</span>'}
         </td>
         <td class="text-center">
-          <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-2)">
-            ${!isUnlimited ? `<button class="btn btn-secondary btn-sm" data-restock-item="${escapeAttr(item.item_id)}" data-restock-name="${escapeAttr(item.item_name)}">入荷</button>` : ''}
-            <label class="toggle-switch" title="${isAvailable ? '販売停止' : '販売再開'}">
-              <input type="checkbox" ${isAvailable ? 'checked' : ''} data-toggle-item="${escapeAttr(item.item_id)}">
-              <span class="toggle-switch__track"></span>
-            </label>
-            <button class="btn btn-secondary btn-sm" data-delete-item="${escapeAttr(item.item_id)}" data-delete-name="${escapeAttr(item.item_name)}" title="削除" style="color: var(--color-danger, #DC2626); padding: 4px 8px;">✕</button>
+          <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-2); flex-wrap: nowrap;">
+            ${!isUnlimited ? `<button class="btn btn-secondary btn-sm" data-restock-item="${escapeAttr(item.item_id)}" data-restock-name="${escapeAttr(item.item_name)}" style="white-space:nowrap">入荷</button>` : ''}
+            <button class="btn btn-secondary btn-sm" data-edit-item="${escapeAttr(item.item_id)}" style="white-space:nowrap">編集</button>
+            <button class="btn btn-secondary btn-sm" data-delete-item="${escapeAttr(item.item_id)}" data-delete-name="${escapeAttr(item.item_name)}" title="削除" style="color: var(--color-danger, #DC2626); padding: 4px 8px; font-size: 0.75rem;">削除</button>
           </div>
         </td>
       </tr>
@@ -239,10 +237,11 @@ function injectItemModal() {
             価格（円）
             <input type="number" id="item-modal-price" class="form-input" min="0" value="0" />
           </label>
-          <label class="form-label">
-            絵文字
-            <input type="text" id="item-modal-emoji" class="form-input" placeholder="例: ☕" maxlength="4" />
-          </label>
+          <div class="form-label">
+            アイコン
+            <input type="hidden" id="item-modal-emoji" />
+            <div id="item-modal-icon-picker" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; max-height:180px; overflow-y:auto; padding:4px; border:1px solid var(--color-border,#ddd); border-radius:8px;"></div>
+          </div>
           <label class="form-label" id="item-modal-stock-label">
             初期在庫数（-1 = 無制限）
             <input type="number" id="item-modal-stock" class="form-input" min="-1" value="-1" />
@@ -305,6 +304,14 @@ function setupInventoryEvents() {
       const idx = parseInt(reorderBtn.dataset.idx, 10);
       const direction = reorderBtn.dataset.move;
       handleReorderMove(idx, direction);
+      return;
+    }
+
+    // 編集ボタン
+    const editBtn = e.target.closest('[data-edit-item]');
+    if (editBtn) {
+      e.stopPropagation();
+      openItemModal('edit', editBtn.dataset.editItem);
       return;
     }
 
@@ -419,6 +426,31 @@ function openItemModal(mode, itemId) {
     stockLabel.style.display = '';
   }
 
+  // アイコンピッカー描画
+  const picker = document.getElementById('item-modal-icon-picker');
+  if (picker) {
+    const categories = getIconCategories();
+    const currentKey = mode === 'edit' ? (menuItems.find(i => i.item_id === itemId)?.icon_svg || '') : '';
+    picker.innerHTML = categories.map(cat => {
+      return `<div style="width:100%;font-size:11px;font-weight:600;color:var(--color-text-secondary,#666);margin-top:4px">${cat.label}</div>` +
+        cat.icons.map(key => {
+          const selected = key === currentKey ? 'outline:2px solid var(--color-primary,#1D9E75);border-radius:8px;' : '';
+          return `<div class="icon-pick" data-icon-key="${key}" style="cursor:pointer;padding:4px;${selected}" title="${key}">${getIcon(key, 28)}</div>`;
+        }).join('');
+    }).join('');
+
+    picker.onclick = (e) => {
+      const el = e.target.closest('[data-icon-key]');
+      if (!el) return;
+      emojiInput.value = el.dataset.iconKey;
+      picker.querySelectorAll('.icon-pick').forEach(p => p.style.outline = '');
+      el.style.outline = '2px solid var(--color-primary,#1D9E75)';
+      el.style.borderRadius = '8px';
+    };
+
+    if (currentKey) emojiInput.value = currentKey;
+  }
+
   overlay.classList.add('is-open');
   nameInput.focus();
 }
@@ -459,6 +491,7 @@ async function handleItemModalConfirm() {
         category,
         price,
         image_emoji: emoji,
+        icon_svg: emoji, // SVGアイコンキー
         stock_count: isNaN(stockCount) ? -1 : stockCount,
       };
 
@@ -477,6 +510,7 @@ async function handleItemModalConfirm() {
         category,
         price,
         image_emoji: emoji,
+        icon_svg: emoji, // SVGアイコンキーを保存
       };
 
       const result = await api.updateMenuItem(itemModalEditId, updates);
