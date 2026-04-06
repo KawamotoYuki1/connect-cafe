@@ -42,13 +42,11 @@ function getCategoryLabel(cat) {
 // ---- Data Loading ----
 
 async function loadMenu() {
-  // Show cached data immediately while fetching fresh data
-  const cached = localStorage.getItem('cc_menu_cache');
-  if (cached) {
-    try {
-      menuItems = JSON.parse(cached);
-      renderMenu(); // Show cached data instantly
-    } catch { /* ignore */ }
+  // 永続キャッシュで即時表示（GAS cold start対策）
+  const cached = api.getMenuCached();
+  if (cached && Array.isArray(cached) && cached.length > 0) {
+    menuItems = cached;
+    renderMenu();
   }
 
   const result = await api.getMenu();
@@ -57,11 +55,7 @@ async function loadMenu() {
     if (!menuItems.length) menuItems = [];
     return;
   }
-  menuItems = result.menu ?? result.items ?? result;
-  if (!Array.isArray(menuItems)) menuItems = [];
-
-  // Cache for next time
-  try { localStorage.setItem('cc_menu_cache', JSON.stringify(menuItems)); } catch { /* ignore */ }
+  menuItems = Array.isArray(result) ? result : (result.menu ?? result.items ?? []);
 }
 
 async function loadUserState() {

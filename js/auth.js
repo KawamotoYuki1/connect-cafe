@@ -194,7 +194,9 @@ export function login() {
       }
     };
 
-    tokenClient.requestAccessToken({ prompt: 'select_account' });
+    // PWAスタンドアロンモード検出: ポップアップが問題になる場合がある
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    tokenClient.requestAccessToken({ prompt: isStandalone ? '' : 'select_account' });
   });
 }
 

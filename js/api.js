@@ -12,6 +12,23 @@ import { getToken, ensureToken } from './auth.js';
 const cache = new Map();
 const CACHE_TTL = 30_000; // 30 seconds
 
+// ---------- Persistent Cache (localStorage) ----------
+// GAS cold start対策: 前回のレスポンスを保存し、即座に表示
+
+function getPersistentCache(action) {
+  try {
+    const raw = localStorage.getItem(`cc_api_${action}`);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return null;
+}
+
+function setPersistentCache(action, data) {
+  try {
+    localStorage.setItem(`cc_api_${action}`, JSON.stringify(data));
+  } catch { /* ignore */ }
+}
+
 function cacheKey(action, params) {
   return `${action}:${JSON.stringify(params ?? {})}`;
 }
@@ -38,6 +55,55 @@ function invalidateCache(prefixes) {
   }
 }
 
+// ---------- Response Normalizer ----------
+// GASはsnake_caseのキーを返す。フロントエンドが使いやすい形に正規化する。
+// これにより全ページのJSコードを個別に修正する必要がなくなる。
+
+const FIELD_ALIASES = {
+  item_id: 'id',
+  item_name: 'name',
+  stock_count: 'stock',
+  image_emoji: 'emoji',
+  is_available: 'available',
+  payment_type: 'paymentType',
+  points_used: 'pointsUsed',
+  year_month: 'yearMonth',
+  registered_at: 'registeredAt',
+  is_active: 'isActive',
+  admin_email: 'adminEmail',
+  quantity_before: 'quantityBefore',
+  quantity_change: 'quantityChange',
+  quantity_after: 'quantityAfter',
+  granted_at: 'grantedAt',
+};
+
+function normalizeObject(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(normalizeObject);
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    // 元のキーも保持しつつ、エイリアスも追加
+    out[k] = v;
+    if (FIELD_ALIASES[k]) {
+      out[FIELD_ALIASES[k]] = v;
+    }
+    // boolean文字列を変換
+    if (v === 'TRUE') out[k] = true;
+    if (v === 'FALSE') out[k] = false;
+    if (FIELD_ALIASES[k]) {
+      if (v === 'TRUE') out[FIELD_ALIASES[k]] = true;
+      if (v === 'FALSE') out[FIELD_ALIASES[k]] = false;
+    }
+  }
+  return out;
+}
+
+function normalizeResponse(data) {
+  if (Array.isArray(data)) return data.map(normalizeObject);
+  if (data && typeof data === 'object' && !data.error) return normalizeObject(data);
+  return data;
+}
+
 // ---------- Core API Caller ----------
 
 /**
@@ -48,13 +114,13 @@ function invalidateCache(prefixes) {
  * @returns {Promise<object>} Response data or { error: string }
  */
 async function apiCall(action, params = {}, options = {}) {
-  const { method = 'GET', useCache = false } = options;
+  const { method = 'GET', useCache = false, persistKey = '' } = options;
 
   if (!CONFIG.GAS_API_URL) {
     return { error: 'GAS_API_URL is not configured' };
   }
 
-  // Check cache for read operations
+  // Check memory cache for read operations
   if (useCache && method === 'GET') {
     const key = cacheKey(action, params);
     const cached = getCached(key);
@@ -87,11 +153,13 @@ async function apiCall(action, params = {}, options = {}) {
       return { error: `HTTP ${res.status}: ${res.statusText}` };
     }
 
-    const data = await res.json();
+    const raw = await res.json();
+    const data = normalizeResponse(raw);
 
     // Cache successful GET responses
-    if (useCache && method === 'GET' && !data.error) {
+    if (useCache && method === 'GET' && !data?.error) {
       setCache(cacheKey(action, params), data);
+      if (persistKey) setPersistentCache(persistKey, data);
     }
 
     return data;
@@ -125,12 +193,21 @@ export const api = {
 
   // ---- Menu ----
   getMenu() {
-    return apiCall('getMenu', {}, { method: 'GET', useCache: true });
+    return apiCall('getMenu', {}, { method: 'GET', useCache: true, persistKey: 'menu' });
+  },
+
+  // 永続キャッシュから即座にメニューを返す（GAS応答前の表示用）
+  getMenuCached() {
+    return getPersistentCache('menu');
   },
 
   // ---- Points ----
   getBalance() {
-    return apiCall('getBalance', {}, { method: 'GET', useCache: true });
+    return apiCall('getBalance', {}, { method: 'GET', useCache: true, persistKey: 'balance' });
+  },
+
+  getBalanceCached() {
+    return getPersistentCache('balance');
   },
 
   getAllBalances() {
@@ -182,6 +259,21 @@ export const api = {
   updateMenuItem(itemId, updates) {
     invalidateCache(['getMenu']);
     return apiCall('updateMenuItem', { itemId, updates: JSON.stringify(updates) }, { method: 'POST' });
+  },
+
+  addMenuItem(item) {
+    invalidateCache(['getMenu']);
+    return apiCall('addMenuItem', { item: JSON.stringify(item) }, { method: 'POST' });
+  },
+
+  deleteMenuItem(itemId) {
+    invalidateCache(['getMenu']);
+    return apiCall('deleteMenuItem', { itemId }, { method: 'POST' });
+  },
+
+  reorderMenu(order) {
+    invalidateCache(['getMenu']);
+    return apiCall('reorderMenu', { order: JSON.stringify(order) }, { method: 'POST' });
   },
 
   // ---- Config ----

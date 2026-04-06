@@ -153,6 +153,9 @@ function routeAction(action, params, user, e) {
     case 'stocktake': return requireAdmin(user, () => stocktake(user.email, JSON.parse(params.counts)));
     case 'getInventoryLog': return requireAdmin(user, () => getInventoryLog(params.limit));
     case 'updateMenuItem': return requireAdmin(user, () => updateMenuItem(Number(params.itemId), JSON.parse(params.updates)));
+    case 'addMenuItem': return requireAdmin(user, () => addMenuItem(JSON.parse(params.item)));
+    case 'deleteMenuItem': return requireAdmin(user, () => deleteMenuItem(Number(params.itemId)));
+    case 'reorderMenu': return requireAdmin(user, () => reorderMenu(JSON.parse(params.order)));
 
     // 設定
     case 'getConfig': return getConfig();
@@ -507,6 +510,59 @@ function updateMenuItem(itemId, updates) {
     }
   }
   return { error: 'Item not found' };
+}
+
+// ========== メニュー追加・削除・並べ替え ==========
+
+function addMenuItem(item) {
+  const sheet = getSheet('menu_items');
+  const data = sheet.getDataRange().getValues();
+  // 新しいIDを生成（既存の最大ID + 1）
+  let maxId = 0;
+  for (let i = 1; i < data.length; i++) {
+    const id = Number(data[i][0]);
+    if (id > maxId) maxId = id;
+  }
+  const newId = maxId + 1;
+  const sortOrder = item.sort_order || (newId * 10);
+  sheet.appendRow([
+    newId,
+    item.name || '新商品',
+    item.category || 'meal',
+    Number(item.price) || 0,
+    'TRUE',
+    Number(item.stock_count) || 0,
+    sortOrder,
+    item.image_emoji || '🆕'
+  ]);
+  return { success: true, id: newId, name: item.name };
+}
+
+function deleteMenuItem(itemId) {
+  const sheet = getSheet('menu_items');
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (Number(data[i][0]) === itemId) {
+      sheet.deleteRow(i + 1);
+      return { success: true, itemId };
+    }
+  }
+  return { error: 'Item not found' };
+}
+
+function reorderMenu(order) {
+  // order: [{id: 1, sort_order: 10}, {id: 2, sort_order: 20}, ...]
+  const sheet = getSheet('menu_items');
+  const data = sheet.getDataRange().getValues();
+  for (const item of order) {
+    for (let i = 1; i < data.length; i++) {
+      if (Number(data[i][0]) === Number(item.id)) {
+        sheet.getRange(i + 1, 7).setValue(Number(item.sort_order)); // 7列目=表示順
+        break;
+      }
+    }
+  }
+  return { success: true, updated: order.length };
 }
 
 // ========== 設定 ==========
