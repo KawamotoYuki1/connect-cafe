@@ -41,8 +41,12 @@ export function initInventory() {
   window.addEventListener('admin:pageshow', (e) => {
     if (e.detail.pageId === 'inventory') {
       loadInventory();
+      loadInventoryLog();
     }
   });
+
+  // 初回ロード
+  loadInventoryLog();
 }
 
 // ---------- データ読み込み ----------
@@ -672,6 +676,7 @@ async function handleRestock() {
       showToast(`${item?.item_name || '商品'} を ${quantity}個 入荷しました`, 'success');
       closeRestockModal();
       await loadInventory();
+      await loadInventoryLog();
     }
   } catch (err) {
     console.error('[Inventory] 入荷エラー:', err);
@@ -680,6 +685,42 @@ async function handleRestock() {
 
   confirmBtn.disabled = false;
   confirmBtn.textContent = '入荷する';
+}
+
+// ---------- 入荷履歴 ----------
+
+async function loadInventoryLog() {
+  const tbody = document.getElementById('inventory-log-tbody');
+  if (!tbody) return;
+
+  const result = await api.getInventoryLog(30);
+  const logs = Array.isArray(result) ? result : (result.data || []);
+
+  if (logs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary" style="padding:var(--space-6)">入荷履歴はまだありません</td></tr>';
+    return;
+  }
+
+  const actionLabels = { restock: '入荷', stocktake: '棚卸し', adjust: '調整' };
+
+  tbody.innerHTML = logs.map(log => {
+    const date = log.created_at ? new Date(log.created_at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+    const action = actionLabels[log.action] || log.action || '-';
+    const change = Number(log.quantity_change ?? log.quantityChange ?? 0);
+    const changeStr = change > 0 ? `+${change}` : String(change);
+    const changeColor = change > 0 ? 'var(--color-primary)' : change < 0 ? 'var(--color-danger,#DC2626)' : 'var(--color-text)';
+
+    return `<tr>
+      <td style="white-space:nowrap;font-size:12px">${escapeHtml(date)}</td>
+      <td style="font-size:12px">${escapeHtml(log.admin_email ?? log.adminEmail ?? '-')}</td>
+      <td><span class="badge">${escapeHtml(action)}</span></td>
+      <td style="font-weight:500">${escapeHtml(log.item_name ?? log.itemName ?? '-')}</td>
+      <td class="text-center">${log.quantity_before ?? log.quantityBefore ?? '-'}</td>
+      <td class="text-center" style="font-weight:600;color:${changeColor}">${changeStr}</td>
+      <td class="text-center">${log.quantity_after ?? log.quantityAfter ?? '-'}</td>
+      <td style="font-size:12px;color:var(--color-text-tertiary)">${escapeHtml(log.note ?? '')}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ---------- ヘルパー ----------
