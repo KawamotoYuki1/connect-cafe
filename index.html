@@ -283,22 +283,70 @@
     }
 
     /* ---- Order Bar Layout ---- */
+    .order-bar__items {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .order-bar__items::-webkit-scrollbar { display: none; }
+    .order-bar__chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px 4px 4px;
+      background: var(--color-primary-lighter, #E1F5EE);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-primary-darker, #085041);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .order-bar__chip-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .order-bar__chip-icon svg { width: 16px; height: 16px; }
+    .order-bar__chip-remove {
+      margin-left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.1);
+      border: none;
+      color: var(--color-primary-darker);
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+    .order-bar__summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .order-bar__total {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text);
+    }
     .order-bar__buttons {
       display: flex;
       gap: var(--space-2);
       flex-shrink: 0;
-    }
-    .order-bar__name {
-      font-size: var(--text-sm);
-      font-weight: var(--weight-semibold);
-      color: var(--color-text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .order-bar__price {
-      font-size: var(--text-xs);
-      color: var(--color-text-tertiary);
     }
 
     /* ---- Monthly Summary ---- */
@@ -727,17 +775,13 @@
 
   <!-- Order Bar (ページ外に配置 - position:fixedで常に表示) -->
   <div class="order-bar auth-only" id="order-bar" role="region" aria-label="注文バー" aria-hidden="true">
-    <div class="order-bar__info">
-      <div class="order-bar__name" id="order-bar-name"></div>
-      <div class="order-bar__price" id="order-bar-price"></div>
-    </div>
-    <div class="order-bar__buttons">
-      <button class="btn btn-sm btn-primary" id="order-btn-point" type="button">
-        ポイント消費
-      </button>
-      <button class="btn btn-sm btn-paypay" id="order-btn-paypay" type="button">
-        PayPay 購入
-      </button>
+    <div class="order-bar__items" id="order-bar-items"></div>
+    <div class="order-bar__summary">
+      <div class="order-bar__total" id="order-bar-total"></div>
+      <div class="order-bar__buttons">
+        <button class="btn btn-sm btn-primary" id="order-btn-point" type="button">ポイント消費</button>
+        <button class="btn btn-sm btn-paypay" id="order-btn-paypay" type="button">PayPay 購入</button>
+      </div>
     </div>
   </div>
 

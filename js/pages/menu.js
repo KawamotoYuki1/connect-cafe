@@ -21,8 +21,6 @@ let isLoaded = false;
 const gridEl = () => document.getElementById('menu-grid');
 const emptyEl = () => document.getElementById('menu-empty');
 const orderBar = () => document.getElementById('order-bar');
-const orderBarName = () => document.getElementById('order-bar-name');
-const orderBarPrice = () => document.getElementById('order-bar-price');
 const btnPoint = () => document.getElementById('order-btn-point');
 const btnPaypay = () => document.getElementById('order-btn-paypay');
 const pageEl = () => document.getElementById('page-menu');
@@ -171,35 +169,57 @@ function renderMenu() {
 
 function updateOrderBar() {
   const bar = orderBar();
-  const nameEl = orderBarName();
-  const priceEl = orderBarPrice();
+  const itemsEl = document.getElementById('order-bar-items');
+  const totalEl = document.getElementById('order-bar-total');
   const pointBtn = btnPoint();
   const paypayBtn = btnPaypay();
-  const page = pageEl();
 
   if (!bar || selectedItems.length === 0) {
     if (bar) {
       bar.classList.remove('is-visible');
       bar.setAttribute('aria-hidden', 'true');
     }
-    if (page) page.classList.remove('has-selection');
     return;
   }
 
-  // 選択商品一覧を表示
-  const names = selectedItems.map(i => i.item_name ?? i.name ?? '不明');
+  // カートチップ表示
+  if (itemsEl) {
+    itemsEl.innerHTML = selectedItems.map((item, idx) => {
+      const iconKey = item.icon_svg ?? item.iconSvg;
+      const iconInner = iconKey ? getIcon(iconKey, 16) : escapeHtml(item.image_emoji ?? item.emoji ?? '☕');
+      const name = escapeHtml(item.item_name ?? item.name ?? '');
+      return `<div class="order-bar__chip">
+        <div class="order-bar__chip-icon">${iconInner}</div>
+        ${name}
+        <button class="order-bar__chip-remove" data-remove-idx="${idx}" title="削除">✕</button>
+      </div>`;
+    }).join('');
+
+    // 削除ボタンのイベント
+    itemsEl.querySelectorAll('[data-remove-idx]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.removeIdx, 10);
+        selectedItems.splice(idx, 1);
+        renderMenu();
+        updateOrderBar();
+      });
+    });
+  }
+
+  // 合計表示
   const totalPrice = selectedItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
   const allFree = selectedItems.every(i => Number(i.price) === 0 || i.category === 'free');
   const hasPaid = selectedItems.some(i => Number(i.price) > 0 && i.category !== 'free');
 
-  nameEl.textContent = names.join('、');
-  priceEl.textContent = allFree ? '無料' : `合計 ${totalPrice.toLocaleString()}pt / ¥${totalPrice.toLocaleString()}（${selectedItems.length}品）`;
+  if (totalEl) {
+    totalEl.textContent = allFree ? `${selectedItems.length}品 無料` : `${selectedItems.length}品 合計 ${totalPrice.toLocaleString()}pt`;
+  }
 
   bar.classList.add('is-visible');
   bar.setAttribute('aria-hidden', 'false');
-  if (page) page.classList.add('has-selection');
 
-  // Point button states
+  // ポイントボタン状態
   if (pointBtn) {
     if (allFree) {
       pointBtn.textContent = '受け取る';
@@ -216,7 +236,6 @@ function updateOrderBar() {
     }
   }
 
-  // PayPay button
   if (paypayBtn) {
     paypayBtn.style.display = hasPaid ? '' : 'none';
   }
