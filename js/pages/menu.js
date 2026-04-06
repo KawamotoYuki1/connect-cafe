@@ -42,14 +42,26 @@ function getCategoryLabel(cat) {
 // ---- Data Loading ----
 
 async function loadMenu() {
+  // Show cached data immediately while fetching fresh data
+  const cached = localStorage.getItem('cc_menu_cache');
+  if (cached) {
+    try {
+      menuItems = JSON.parse(cached);
+      renderMenu(); // Show cached data instantly
+    } catch { /* ignore */ }
+  }
+
   const result = await api.getMenu();
   if (result.error) {
     console.error('[Menu] Failed to load menu:', result.error);
-    menuItems = [];
+    if (!menuItems.length) menuItems = [];
     return;
   }
   menuItems = result.menu ?? result.items ?? result;
   if (!Array.isArray(menuItems)) menuItems = [];
+
+  // Cache for next time
+  try { localStorage.setItem('cc_menu_cache', JSON.stringify(menuItems)); } catch { /* ignore */ }
 }
 
 async function loadUserState() {
@@ -99,7 +111,7 @@ function renderMenu() {
     const isOutOfStock = item.stock === 0;
     const isSelected = selectedItem?.id === item.id;
     const isFree = item.price === 0 || item.isFree;
-    const emoji = escapeHtml(item.emoji ?? item.icon ?? '☕');
+    const emoji = escapeHtml(item.image_emoji ?? item.emoji ?? item.icon ?? '☕');
     const name = escapeHtml(item.name ?? '不明');
     const price = isFree ? '無料' : `${Number(item.price ?? 0).toLocaleString()}pt`;
 

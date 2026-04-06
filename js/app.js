@@ -148,7 +148,7 @@ export function showPage(pageId) {
   // Update nav active states
   const navLinks = document.querySelectorAll('[data-nav]');
   for (const link of navLinks) {
-    link.classList.toggle('nav-active', link.dataset.nav === pageId);
+    link.classList.toggle('is-active', link.dataset.nav === pageId);
   }
 
   // Dispatch custom event for page-specific init
