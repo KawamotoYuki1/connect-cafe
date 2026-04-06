@@ -114,17 +114,18 @@ function renderRecentTable(data) {
   const tbody = document.getElementById('dashboard-recent-tbody');
   if (!tbody) return;
 
-  if (data.error || !data.history || data.history.length === 0) {
+  const txList = Array.isArray(data) ? data : (data.history || data.data || []);
+  if (data?.error || txList.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="5" class="text-center text-secondary" style="padding: var(--space-8)">
-          ${data.error ? 'データの取得に失敗しました' : '本日の取引はありません'}
+          ${data?.error ? 'データの取得に失敗しました' : '本日の取引はありません'}
         </td>
       </tr>`;
     return;
   }
 
-  tbody.innerHTML = data.history.map((tx) => `
+  tbody.innerHTML = txList.map((tx) => `
     <tr>
       <td style="white-space:nowrap">${formatDate(tx.timestamp || tx.date)}</td>
       <td>${escapeHtml(tx.userName || tx.email || '-')}</td>

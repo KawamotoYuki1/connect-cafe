@@ -40,12 +40,12 @@ async function loadPointData() {
     api.listUsers(),
   ]);
 
-  if (!balanceResult.error) {
-    balances = balanceResult.balances || [];
+  if (!balanceResult?.error) {
+    balances = Array.isArray(balanceResult) ? balanceResult : (balanceResult.balances || []);
   }
 
-  if (!usersResult.error) {
-    userList = usersResult.users || [];
+  if (!usersResult?.error) {
+    userList = Array.isArray(usersResult) ? usersResult : (usersResult.users || []);
     populateUserSelect();
   }
 

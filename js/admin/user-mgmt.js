@@ -38,12 +38,12 @@ export function initUserMgmt() {
 async function loadUsers() {
   const result = await api.listUsers();
 
-  if (result.error) {
+  if (result?.error) {
     showToast('ユーザーデータの取得に失敗しました', 'error');
     return;
   }
 
-  allUsers = result.users || [];
+  allUsers = Array.isArray(result) ? result : (result.users || result.data || []);
   renderUsersTable();
 }
 

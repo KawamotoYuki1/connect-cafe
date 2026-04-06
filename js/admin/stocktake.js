@@ -41,12 +41,12 @@ async function loadStocktake() {
     return;
   }
 
-  const allItems = result.items || result.menu || [];
+  const allItems = Array.isArray(result) ? result : (result.items || result.menu || []);
 
   // Only show paid items with finite stock (not free drinks, not unlimited)
   stockItems = allItems.filter((item) => {
-    const stock = item.stock ?? item.quantity ?? -1;
-    return stock !== -1 && item.price > 0;
+    const stock = item.stock_count ?? item.stock ?? -1;
+    return stock !== -1 && Number(item.price) > 0;
   });
 
   renderStocktakeGrid();

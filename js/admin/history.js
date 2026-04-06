@@ -46,7 +46,7 @@ async function loadHistory() {
     showToast('履歴データの取得に失敗しました', 'error');
     historyData = [];
   } else {
-    historyData = result.history || [];
+    historyData = Array.isArray(result) ? result : (result.history || result.data || []);
   }
 
   renderHistoryTable();
