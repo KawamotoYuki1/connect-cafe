@@ -80,7 +80,10 @@ function syncTable(table) {
   var config = SYNC_SHEETS[table];
   if (!config) return;
 
-  var data = supabaseFetch(table, 'select=*&order=id.asc.nullslast');
+  // テーブルごとにソート列を変える（idがないテーブルがある）
+  var orderCol = { users: 'email', config: 'key' };
+  var order = orderCol[table] ? orderCol[table] + '.asc' : 'id.asc.nullslast';
+  var data = supabaseFetch(table, 'select=*&order=' + order);
   Logger.log(table + ': ' + data.length + '行取得');
 
   var ss = SpreadsheetApp.getActiveSpreadsheet();
