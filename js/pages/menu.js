@@ -169,6 +169,36 @@ function renderMenu() {
   }).join('');
 }
 
+/**
+ * カート分類ロジック:
+ * - 有料商品のうち最高額1品 → ポイント利用（1日1回制限）
+ * - 残りの有料商品 → PayPay
+ * - 無料商品 → そのまま受け取り
+ */
+function classifyCart() {
+  const freeItems = selectedItems.filter(i => Number(i.price) === 0 || i.category === 'free');
+  const paidItems = selectedItems.filter(i => Number(i.price) > 0 && i.category !== 'free');
+
+  let pointItem = null;
+  let paypayItems = [];
+
+  if (paidItems.length > 0 && !todayPointUsed) {
+    // 最高額をポイント対象に
+    const sorted = [...paidItems].sort((a, b) => Number(b.price) - Number(a.price));
+    const highest = sorted[0];
+    if (userBalance >= Number(highest.price)) {
+      pointItem = highest;
+      paypayItems = sorted.slice(1);
+    } else {
+      paypayItems = paidItems;
+    }
+  } else {
+    paypayItems = paidItems;
+  }
+
+  return { freeItems, pointItem, paypayItems };
+}
+
 function updateOrderBar() {
   const bar = orderBar();
   const itemsEl = document.getElementById('order-bar-items');
@@ -184,62 +214,91 @@ function updateOrderBar() {
     return;
   }
 
-  // カートチップ表示
-  if (itemsEl) {
-    itemsEl.innerHTML = selectedItems.map((item, idx) => {
-      const iconKey = item.icon_svg ?? item.iconSvg;
-      const iconInner = iconKey ? getIcon(iconKey, 16) : escapeHtml(item.image_emoji ?? item.emoji ?? '☕');
-      const name = escapeHtml(item.item_name ?? item.name ?? '');
-      return `<div class="order-bar__chip">
-        <div class="order-bar__chip-icon">${iconInner}</div>
-        ${name}
-        <button class="order-bar__chip-remove" data-remove-idx="${idx}" title="削除">✕</button>
-      </div>`;
-    }).join('');
+  const { freeItems, pointItem, paypayItems } = classifyCart();
+  const paypayTotal = paypayItems.reduce((s, i) => s + Number(i.price), 0);
 
-    // 削除ボタンのイベント
-    itemsEl.querySelectorAll('[data-remove-idx]').forEach(btn => {
+  // カート内容を2段表示
+  if (itemsEl) {
+    let html = '';
+
+    // ポイント利用商品
+    if (pointItem) {
+      const name = escapeHtml(pointItem.item_name ?? pointItem.name ?? '');
+      html += `<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-primary);font-weight:600">
+        <span style="background:var(--color-primary);color:#fff;border-radius:4px;padding:1px 6px;font-size:10px">PT</span>
+        ${name} ${Number(pointItem.price).toLocaleString()}pt
+        <button class="order-bar__chip-remove" data-remove-id="${escapeHtml(String(pointItem.item_id ?? pointItem.id))}" title="削除">✕</button>
+      </div>`;
+    }
+
+    // PayPay商品
+    if (paypayItems.length > 0) {
+      const names = paypayItems.map(i => escapeHtml(i.item_name ?? i.name ?? '')).join('、');
+      html += `<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--color-amber,#BA7517);font-weight:600">
+        <span style="background:var(--color-amber,#BA7517);color:#fff;border-radius:4px;padding:1px 6px;font-size:10px">PayPay</span>
+        ${names} ¥${paypayTotal.toLocaleString()}
+      </div>`;
+    }
+
+    // 無料商品
+    if (freeItems.length > 0) {
+      const names = freeItems.map(i => escapeHtml(i.item_name ?? i.name ?? '')).join('、');
+      html += `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-tertiary)">
+        <span style="background:#E1F5EE;color:var(--color-primary);border-radius:4px;padding:1px 6px;font-size:10px">FREE</span>
+        ${names}
+      </div>`;
+    }
+
+    // 削除ボタンイベント
+    itemsEl.innerHTML = html;
+    itemsEl.querySelectorAll('[data-remove-id]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const idx = parseInt(btn.dataset.removeIdx, 10);
-        selectedItems.splice(idx, 1);
-        renderMenu();
-        updateOrderBar();
+        const id = btn.dataset.removeId;
+        const idx = selectedItems.findIndex(i => String(i.item_id ?? i.id) === id);
+        if (idx >= 0) {
+          selectedItems.splice(idx, 1);
+          renderMenu();
+          updateOrderBar();
+        }
       });
     });
   }
 
-  // 合計表示
-  const totalPrice = selectedItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
-  const allFree = selectedItems.every(i => Number(i.price) === 0 || i.category === 'free');
-  const hasPaid = selectedItems.some(i => Number(i.price) > 0 && i.category !== 'free');
-
+  // 合計
   if (totalEl) {
-    totalEl.textContent = allFree ? `${selectedItems.length}品 無料` : `${selectedItems.length}品 合計 ${totalPrice.toLocaleString()}pt`;
+    totalEl.textContent = `${selectedItems.length}品選択中`;
   }
 
   bar.classList.add('is-visible');
   bar.setAttribute('aria-hidden', 'false');
 
-  // ポイントボタン状態
+  // ボタン表示
   if (pointBtn) {
-    if (allFree) {
-      pointBtn.textContent = '受け取る';
+    if (pointItem) {
+      pointBtn.textContent = `${Number(pointItem.price).toLocaleString()}pt で購入`;
       pointBtn.disabled = false;
+      pointBtn.style.display = '';
     } else if (todayPointUsed) {
       pointBtn.textContent = '本日利用済み';
       pointBtn.disabled = true;
-    } else if (userBalance < totalPrice) {
-      pointBtn.textContent = 'ポイント不足';
-      pointBtn.disabled = true;
-    } else {
-      pointBtn.textContent = `${totalPrice}pt で購入`;
+      pointBtn.style.display = '';
+    } else if (freeItems.length > 0 && paypayItems.length === 0) {
+      pointBtn.textContent = '受け取る';
       pointBtn.disabled = false;
+      pointBtn.style.display = '';
+    } else {
+      pointBtn.style.display = 'none';
     }
   }
 
   if (paypayBtn) {
-    paypayBtn.style.display = hasPaid ? '' : 'none';
+    if (paypayItems.length > 0) {
+      paypayBtn.textContent = `PayPay ¥${paypayTotal.toLocaleString()}`;
+      paypayBtn.style.display = '';
+    } else {
+      paypayBtn.style.display = 'none';
+    }
   }
 }
 
@@ -288,42 +347,42 @@ function handleItemClick(e) {
 async function handlePointPurchase() {
   if (selectedItems.length === 0) return;
 
-  const names = selectedItems.map(i => i.item_name ?? i.name).join('、');
-  const totalPrice = selectedItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
-  const allFree = selectedItems.every(i => Number(i.price) === 0 || i.category === 'free');
-  const title = allFree ? '受け取り確認' : 'ポイント消費';
-  const message = allFree
-    ? `「${names}」を受け取りますか？`
-    : `「${names}」を合計${totalPrice}ptで購入しますか？\n残高: ${userBalance}pt → ${userBalance - totalPrice}pt`;
+  const { freeItems, pointItem, paypayItems } = classifyCart();
 
-  const confirmed = await showModal({
-    title,
-    message,
-    confirmText: allFree ? '受け取る' : '購入する',
-    cancelText: 'キャンセル',
-    type: 'primary',
-  });
+  // ポイント対象商品（最高額1品）のみ購入
+  if (pointItem) {
+    const name = pointItem.item_name ?? pointItem.name;
+    const confirmed = await showModal({
+      title: 'ポイント消費',
+      message: `「${name}」を${Number(pointItem.price).toLocaleString()}ptで購入しますか？\n残高: ${userBalance}pt → ${userBalance - Number(pointItem.price)}pt`,
+      confirmText: '購入する',
+      cancelText: 'キャンセル',
+      type: 'primary',
+    });
+    if (!confirmed) return;
 
-  if (!confirmed) return;
-
-  // 各商品を順番に購入
-  let hasError = false;
-  for (const item of selectedItems) {
-    const isFree = Number(item.price) === 0 || item.category === 'free';
-    const result = await api.purchase(item, isFree ? 'free' : 'point');
+    const result = await api.purchase(pointItem, 'point');
     if (result.error) {
       showToast(result.error, 'error');
-      hasError = true;
-      break;
+      return;
     }
+    showToast(`${name} をポイントで購入しました`, 'success');
   }
 
-  if (!hasError) {
-    showToast(`${names} を${allFree ? '受け取りました' : '購入しました'}`, 'success');
+  // 無料商品も同時に処理
+  for (const item of freeItems) {
+    await api.purchase(item, 'free');
   }
-  selectedItems = [];
+
+  // カートから処理済み商品を除去（PayPay分は残す）
+  if (paypayItems.length > 0) {
+    selectedItems = [...paypayItems];
+    showToast(`PayPay分 ¥${paypayItems.reduce((s, i) => s + Number(i.price), 0).toLocaleString()} はQRコードで支払いしてください`, 'info');
+  } else {
+    selectedItems = [];
+  }
+
   updateOrderBar();
-
   await Promise.all([loadMenu(), loadUserState()]);
   renderMenu();
 }
@@ -331,11 +390,11 @@ async function handlePointPurchase() {
 async function handlePaypayPurchase() {
   if (selectedItems.length === 0) return;
 
-  const paidItems = selectedItems.filter(i => Number(i.price) > 0 && i.category !== 'free');
-  if (paidItems.length === 0) return;
+  const { paypayItems } = classifyCart();
+  if (paypayItems.length === 0) return;
 
-  const names = paidItems.map(i => i.item_name ?? i.name).join('、');
-  const total = paidItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
+  const names = paypayItems.map(i => i.item_name ?? i.name).join('、');
+  const total = paypayItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
 
   const confirmed = await showModal({
     title: 'PayPay で購入',
@@ -348,7 +407,7 @@ async function handlePaypayPurchase() {
   if (!confirmed) return;
 
   let hasError = false;
-  for (const item of paidItems) {
+  for (const item of paypayItems) {
     const result = await api.purchase(item, 'paypay');
     if (result.error) {
       showToast(result.error, 'error');
