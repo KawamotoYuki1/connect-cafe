@@ -102,33 +102,49 @@ function renderMenu() {
 
   if (empty) empty.classList.add('hidden');
 
+  // カテゴリでグループ化（「すべて」タブのみ）
+  const catLabels = { free: '無料ドリンク', drink: 'ドリンク', snack: 'おやつ', meal: '食事' };
+  const catOrder = ['free', 'drink', 'snack', 'meal'];
+  let lastCat = '';
+
   grid.innerHTML = filtered.map((item) => {
-    // GASフィールド名対応（item_id/item_name/stock_count/image_emoji）
     const itemId = item.item_id ?? item.id;
     const itemName = item.item_name ?? item.name ?? '不明';
     const stock = item.stock_count ?? item.stock;
     const stockNum = Number(stock);
-    const isOutOfStock = stock !== undefined && stock !== -1 && stockNum === 0;
-    const isSelected = selectedItems.some(s => (s.item_id ?? s.id) === itemId);
+    const isUnlimited = stock === -1 || stock === '-1';
+    const isOutOfStock = !isUnlimited && stockNum === 0;
+    const isSelected = selectedItems.some(s => String(s.item_id ?? s.id) === String(itemId));
     const isFree = Number(item.price) === 0 || item.category === 'free';
-    // SVGアイコンがあればそれを使う、なければ絵文字フォールバック
-    const iconKey = item.icon_svg ?? item.iconSvg;
-    const iconHtml = iconKey ? getIcon(iconKey, 36) : escapeHtml(item.image_emoji ?? item.emoji ?? '☕');
-    const name = escapeHtml(itemName);
-    const price = isFree ? '無料' : `${Number(item.price ?? 0).toLocaleString()}pt`;
 
-    let stockBadge = '';
+    // アイコン
+    const iconKey = item.icon_svg ?? item.iconSvg;
+    const iconInner = iconKey
+      ? getIcon(iconKey, 28)
+      : `<span class="emoji-fallback">${escapeHtml(item.image_emoji ?? item.emoji ?? '☕')}</span>`;
+
+    // 在庫表示
+    let stockHtml = '';
     if (isOutOfStock) {
-      stockBadge = '<span class="stock-badge stock-badge--out-of-stock">在庫切れ</span>';
-    } else if (stock != null && stock !== -1 && stockNum <= 3) {
-      stockBadge = `<span class="stock-badge stock-badge--low-stock">残${stockNum}</span>`;
-    } else if (stock != null && stock !== -1 && stockNum > 3) {
-      stockBadge = `<span class="stock-badge stock-badge--in-stock">在庫${stockNum}</span>`;
+      stockHtml = '<span class="menu-item__stock menu-item__stock--out">品切れ</span>';
+    } else if (!isUnlimited && stockNum <= 3) {
+      stockHtml = `<span class="menu-item__stock menu-item__stock--low">残${stockNum}</span>`;
+    } else if (!isUnlimited) {
+      stockHtml = `<span class="menu-item__stock">在庫${stockNum}</span>`;
+    } else if (isFree) {
+      stockHtml = '<span class="menu-item__stock">飲み放題</span>';
     }
 
-    let priceBadge = '';
-    if (isFree) {
-      priceBadge = '<span class="badge badge-green" style="margin-top:4px">飲み放題</span>';
+    // 価格
+    const priceHtml = isFree
+      ? '<span class="menu-item__price menu-item__price--free">FREE</span>'
+      : `<span class="menu-item__price">${Number(item.price).toLocaleString()}<small style="font-size:10px;font-weight:400;opacity:0.6">pt</small></span>`;
+
+    // カテゴリ区切り
+    let separator = '';
+    if (activeCategory === 'all' && item.category !== lastCat) {
+      lastCat = item.category;
+      separator = `<div class="menu-section-label">${catLabels[item.category] || item.category}</div>`;
     }
 
     const classes = [
@@ -137,17 +153,19 @@ function renderMenu() {
       isOutOfStock ? 'is-disabled' : '',
     ].filter(Boolean).join(' ');
 
-    return `
+    return `${separator}
       <div class="${classes}" data-item-id="${escapeHtml(String(itemId))}" role="listitem" tabindex="0"
-           aria-label="${name} ${price}" ${isOutOfStock ? 'aria-disabled="true"' : ''}>
-        <span class="menu-item__emoji" aria-hidden="true">${iconHtml}</span>
-        <div class="menu-item__text">
-          <div class="menu-item__name">${name}</div>
-          <div class="menu-item__price">${price} ${stockBadge}${priceBadge}</div>
+           aria-label="${escapeHtml(itemName)} ${isFree ? '無料' : item.price + 'pt'}" ${isOutOfStock ? 'aria-disabled="true"' : ''}>
+        <div class="menu-item__icon">${iconInner}</div>
+        <div class="menu-item__body">
+          <div class="menu-item__name">${escapeHtml(itemName)}</div>
+          <div class="menu-item__meta">${stockHtml}</div>
         </div>
-        <span class="menu-item__add" aria-label="${isSelected ? '選択解除' : '追加'}">${isSelected ? '✓' : '+'}</span>
-      </div>
-    `;
+        ${priceHtml}
+        <button class="menu-item__cart-btn" aria-label="${isSelected ? '選択解除' : 'カートに追加'}">
+          ${isSelected ? '✓' : '+'}
+        </button>
+      </div>`;
   }).join('');
 }
 
