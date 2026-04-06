@@ -76,7 +76,14 @@ function doPost(e) {
 }
 
 function handleRequest(e) {
-  const params = e.parameter || {};
+  // GETはe.parameter、POSTはe.postData.contentsにJSONが入る
+  let params = e.parameter || {};
+  if (e.postData && e.postData.contents) {
+    try {
+      const body = JSON.parse(e.postData.contents);
+      params = Object.assign({}, params, body);
+    } catch (err) { /* bodyがJSONでない場合は無視 */ }
+  }
   const action = params.action;
 
   // CORS対応

@@ -1,7 +1,7 @@
 /**
  * Connect Cafe - 在庫管理
  *
- * メニュー商品の表示・入庫・販売切替・追加・編集・削除・並べ替え
+ * メニュー商品の表示・入荷・販売切替・追加・編集・削除・並べ替え
  */
 import { api } from '../api.js';
 import { formatPrice } from '../app.js';
@@ -115,7 +115,7 @@ function renderInventoryTable() {
         </td>
         <td class="text-center">
           <div style="display: flex; align-items: center; justify-content: center; gap: var(--space-2)">
-            ${!isUnlimited ? `<button class="btn btn-secondary btn-sm" data-restock-item="${escapeAttr(item.item_id)}" data-restock-name="${escapeAttr(item.item_name)}">入庫</button>` : ''}
+            ${!isUnlimited ? `<button class="btn btn-secondary btn-sm" data-restock-item="${escapeAttr(item.item_id)}" data-restock-name="${escapeAttr(item.item_name)}">入荷</button>` : ''}
             <label class="toggle-switch" title="${isAvailable ? '販売停止' : '販売再開'}">
               <input type="checkbox" ${isAvailable ? 'checked' : ''} data-toggle-item="${escapeAttr(item.item_id)}">
               <span class="toggle-switch__track"></span>
@@ -177,7 +177,7 @@ function populateRestockSelect() {
 
 // ---------- 動的UI注入 ----------
 
-/** 「+ 商品追加」ボタンを入庫ボタンの隣に挿入 */
+/** 「+ 商品追加」ボタンを入荷ボタンの隣に挿入 */
 function injectAddButton() {
   const restockBtn = document.getElementById('inventory-restock-btn');
   if (!restockBtn || document.getElementById('inventory-add-btn')) return;
@@ -261,7 +261,7 @@ function injectItemModal() {
 // ---------- イベントハンドラ ----------
 
 function setupInventoryEvents() {
-  // 入庫ボタン（ヘッダー）
+  // 入荷ボタン（ヘッダー）
   document.getElementById('inventory-restock-btn')?.addEventListener('click', () => {
     openRestockModal();
   });
@@ -282,7 +282,7 @@ function setupInventoryEvents() {
 
   // テーブル内クリック（委譲）
   document.addEventListener('click', (e) => {
-    // 入庫ボタン
+    // 入荷ボタン
     const restockBtn = e.target.closest('[data-restock-item]');
     if (restockBtn) {
       e.stopPropagation();
@@ -351,7 +351,7 @@ function setupInventoryEvents() {
     toggle.disabled = false;
   });
 
-  // 入庫モーダル
+  // 入荷モーダル
   document.getElementById('restock-cancel')?.addEventListener('click', closeRestockModal);
   document.getElementById('restock-confirm')?.addEventListener('click', handleRestock);
   document.getElementById('restock-modal-overlay')?.addEventListener('click', (e) => {
@@ -406,7 +406,7 @@ function openItemModal(mode, itemId) {
     priceInput.value = item.price ?? 0;
     emojiInput.value = item.image_emoji || '';
     stockInput.value = item.stock_count ?? -1;
-    // 編集時は在庫表示するが変更不可（入庫で管理）
+    // 編集時は在庫表示するが変更不可（入荷で管理）
     stockLabel.style.display = 'none';
   } else {
     title.textContent = '商品追加';
@@ -577,7 +577,7 @@ async function handleReorderSave() {
   }
 }
 
-// ---------- 入庫モーダル ----------
+// ---------- 入荷モーダル ----------
 
 function openRestockModal(preselectedId) {
   const overlay = document.getElementById('restock-modal-overlay');
@@ -621,7 +621,7 @@ async function handleRestock() {
   }
 
   if (!quantity || quantity < 1) {
-    showToast('入庫数を入力してください', 'error');
+    showToast('入荷数を入力してください', 'error');
     return;
   }
 
@@ -632,20 +632,20 @@ async function handleRestock() {
     const result = await api.restock(itemId, quantity, note);
 
     if (result?.error) {
-      showToast(`入庫に失敗しました: ${result.error}`, 'error');
+      showToast(`入荷に失敗しました: ${result.error}`, 'error');
     } else {
       const item = menuItems.find((i) => i.item_id === itemId);
-      showToast(`${item?.item_name || '商品'} を ${quantity}個 入庫しました`, 'success');
+      showToast(`${item?.item_name || '商品'} を ${quantity}個 入荷しました`, 'success');
       closeRestockModal();
       await loadInventory();
     }
   } catch (err) {
-    console.error('[Inventory] 入庫エラー:', err);
-    showToast('入庫に失敗しました', 'error');
+    console.error('[Inventory] 入荷エラー:', err);
+    showToast('入荷に失敗しました', 'error');
   }
 
   confirmBtn.disabled = false;
-  confirmBtn.textContent = '入庫する';
+  confirmBtn.textContent = '入荷する';
 }
 
 // ---------- ヘルパー ----------
