@@ -146,7 +146,7 @@ export const api = {
   purchase(item, paymentType) {
     invalidateCache(['getBalance', 'getAllBalances', 'getHistory', 'getAllHistory', 'getTodayStats', 'getMenu']);
     return apiCall('purchase', {
-      item: JSON.stringify({ id: item.id, name: item.name, category: item.category, price: item.price }),
+      item: JSON.stringify({ id: item.item_id ?? item.id, name: item.item_name ?? item.name, category: item.category, price: item.price }),
       paymentType,
     }, { method: 'POST' });
   },

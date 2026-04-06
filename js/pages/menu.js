@@ -68,7 +68,7 @@ async function loadUserState() {
   // Load balance
   const balResult = await api.getBalance();
   if (!balResult.error) {
-    userBalance = balResult.balance ?? balResult.points ?? 0;
+    userBalance = Number(balResult.remaining ?? balResult.balance ?? balResult.points ?? 0);
   }
 
   // Check today's point usage
@@ -108,20 +108,25 @@ function renderMenu() {
   if (empty) empty.classList.add('hidden');
 
   grid.innerHTML = filtered.map((item) => {
-    const isOutOfStock = item.stock === 0;
-    const isSelected = selectedItem?.id === item.id;
-    const isFree = item.price === 0 || item.isFree;
+    // GASフィールド名対応（item_id/item_name/stock_count/image_emoji）
+    const itemId = item.item_id ?? item.id;
+    const itemName = item.item_name ?? item.name ?? '不明';
+    const stock = item.stock_count ?? item.stock;
+    const stockNum = Number(stock);
+    const isOutOfStock = stock !== undefined && stock !== -1 && stockNum === 0;
+    const isSelected = selectedItem && (selectedItem.item_id ?? selectedItem.id) === itemId;
+    const isFree = Number(item.price) === 0 || item.category === 'free';
     const emoji = escapeHtml(item.image_emoji ?? item.emoji ?? item.icon ?? '☕');
-    const name = escapeHtml(item.name ?? '不明');
+    const name = escapeHtml(itemName);
     const price = isFree ? '無料' : `${Number(item.price ?? 0).toLocaleString()}pt`;
 
     let stockBadge = '';
     if (isOutOfStock) {
       stockBadge = '<span class="stock-badge stock-badge--out-of-stock">在庫切れ</span>';
-    } else if (item.stock != null && item.stock <= 3) {
-      stockBadge = `<span class="stock-badge stock-badge--low-stock">残${item.stock}</span>`;
-    } else if (item.stock != null) {
-      stockBadge = `<span class="stock-badge stock-badge--in-stock">在庫${item.stock}</span>`;
+    } else if (stock != null && stock !== -1 && stockNum <= 3) {
+      stockBadge = `<span class="stock-badge stock-badge--low-stock">残${stockNum}</span>`;
+    } else if (stock != null && stock !== -1 && stockNum > 3) {
+      stockBadge = `<span class="stock-badge stock-badge--in-stock">在庫${stockNum}</span>`;
     }
 
     let priceBadge = '';
@@ -136,7 +141,7 @@ function renderMenu() {
     ].filter(Boolean).join(' ');
 
     return `
-      <div class="${classes}" data-item-id="${escapeHtml(String(item.id))}" role="listitem" tabindex="0"
+      <div class="${classes}" data-item-id="${escapeHtml(String(itemId))}" role="listitem" tabindex="0"
            aria-label="${name} ${price}" ${isOutOfStock ? 'aria-disabled="true"' : ''}>
         <span class="menu-item__emoji" aria-hidden="true">${emoji}</span>
         <div class="menu-item__name">${name}</div>
@@ -165,9 +170,9 @@ function updateOrderBar() {
     return;
   }
 
-  const isFree = selectedItem.price === 0 || selectedItem.isFree;
+  const isFree = Number(selectedItem.price) === 0 || selectedItem.category === 'free';
 
-  nameEl.textContent = selectedItem.name ?? '不明';
+  nameEl.textContent = selectedItem.item_name ?? selectedItem.name ?? '不明';
   priceEl.textContent = isFree ? '無料' : `${Number(selectedItem.price ?? 0).toLocaleString()}pt / ¥${Number(selectedItem.price ?? 0).toLocaleString()}`;
 
   bar.classList.add('is-visible');
@@ -238,7 +243,7 @@ function handleItemClick(e) {
   if (!itemEl || itemEl.classList.contains('is-disabled')) return;
 
   const itemId = itemEl.dataset.itemId;
-  const item = menuItems.find((i) => String(i.id) === itemId);
+  const item = menuItems.find((i) => String(i.item_id ?? i.id) === itemId);
   if (!item) return;
 
   // Toggle selection
@@ -255,11 +260,12 @@ function handleItemClick(e) {
 async function handlePointPurchase() {
   if (!selectedItem) return;
 
-  const isFree = selectedItem.price === 0 || selectedItem.isFree;
+  const itemName = selectedItem.item_name ?? selectedItem.name;
+  const isFree = Number(selectedItem.price) === 0 || selectedItem.category === 'free';
   const title = isFree ? '受け取り確認' : 'ポイント消費';
   const message = isFree
-    ? `「${selectedItem.name}」を受け取りますか？`
-    : `「${selectedItem.name}」を${selectedItem.price}ptで購入しますか？\n残高: ${userBalance}pt → ${userBalance - selectedItem.price}pt`;
+    ? `「${itemName}」を受け取りますか？`
+    : `「${itemName}」を${selectedItem.price}ptで購入しますか？\n残高: ${userBalance}pt → ${userBalance - selectedItem.price}pt`;
 
   const confirmed = await showModal({
     title,
@@ -277,7 +283,7 @@ async function handlePointPurchase() {
     return;
   }
 
-  showToast(`${selectedItem.name} を${isFree ? '受け取りました' : '購入しました'}`, 'success');
+  showToast(`${itemName} を${isFree ? '受け取りました' : '購入しました'}`, 'success');
   selectedItem = null;
   updateOrderBar();
 
@@ -289,9 +295,10 @@ async function handlePointPurchase() {
 async function handlePaypayPurchase() {
   if (!selectedItem) return;
 
+  const payItemName = selectedItem.item_name ?? selectedItem.name;
   const confirmed = await showModal({
     title: 'PayPay で購入',
-    message: `「${selectedItem.name}」を ¥${Number(selectedItem.price).toLocaleString()} で購入します。\nカフェ設置のQRコードをPayPayでスキャンしてください。`,
+    message: `「${payItemName}」を ¥${Number(selectedItem.price).toLocaleString()} で購入します。\nカフェ設置のQRコードをPayPayでスキャンしてください。`,
     confirmText: '購入記録する',
     cancelText: 'キャンセル',
     type: 'warning',
@@ -305,7 +312,7 @@ async function handlePaypayPurchase() {
     return;
   }
 
-  showToast(`${selectedItem.name} をPayPayで購入しました`, 'paypay');
+  showToast(`${payItemName} をPayPayで購入しました`, 'paypay');
   selectedItem = null;
   updateOrderBar();
 

@@ -15,6 +15,56 @@
 const SPREADSHEET_ID = '1ISj7tNTYLTScG4Zwq7p9OtVrOxhgin_IlApLS8A4TLc';
 const ALLOWED_DOMAIN = 'chronusinc.jp';
 
+// 日本語ヘッダー → 英語フィールド名マッピング
+// スプレッドシートは日本語ヘッダーだが、コード内部では英語キーを使用
+const COL_MAP = {
+  // users
+  'メールアドレス': 'email',
+  '名前': 'name',
+  '権限': 'role',
+  '登録日時': 'registered_at',
+  '有効': 'is_active',
+  // point_balances
+  '年月': 'year_month',
+  '付与pt': 'granted',
+  '使用pt': 'used',
+  '残pt': 'remaining',
+  '付与日時': 'granted_at',
+  '期限切れ': 'expired',
+  // transactions
+  '取引ID': 'id',
+  '日時': 'timestamp',
+  '日付': 'date',
+  '商品名': 'item_name',
+  '商品ID': 'item_id',
+  'カテゴリ': 'category',
+  '価格': 'price',
+  '支払方法': 'payment_type',
+  // '使用pt' は point_balances と共有（上で定義済み → transactions では 'points_used'）
+  'ステータス': 'status',
+  // menu_items
+  '販売中': 'is_available',
+  '在庫数': 'stock_count',
+  '表示順': 'sort_order',
+  'アイコン': 'image_emoji',
+  // inventory_log
+  '管理者': 'admin_email',
+  '操作': 'action',
+  '変更前': 'quantity_before',
+  '変更数': 'quantity_change',
+  '変更後': 'quantity_after',
+  'メモ': 'note',
+  // config
+  '設定キー': 'key',
+  '設定値': 'value',
+};
+
+// シートごとに「使用pt」の意味が異なるため、シート名で分岐するマッピング
+const SHEET_SPECIFIC_MAP = {
+  'transactions': { '使用pt': 'points_used' },
+  'point_balances': { '使用pt': 'used' },
+};
+
 // ========== エントリーポイント ==========
 
 function doGet(e) {
@@ -130,7 +180,9 @@ function getSheet(name) {
 function sheetToObjects(sheet) {
   const data = sheet.getDataRange().getValues();
   if (data.length < 2) return [];
-  const headers = data[0];
+  const sheetName = sheet.getName();
+  const specific = SHEET_SPECIFIC_MAP[sheetName] || {};
+  const headers = data[0].map(h => specific[h] || COL_MAP[h] || h);
   return data.slice(1).map(row => {
     const obj = {};
     headers.forEach((h, i) => obj[h] = row[i]);
@@ -433,12 +485,20 @@ function getInventoryLog(limit) {
 function updateMenuItem(itemId, updates) {
   const sheet = getSheet('menu_items');
   const data = sheet.getDataRange().getValues();
-  const headers = data[0];
+  const rawHeaders = data[0];
+  // 英語キー → 日本語ヘッダーの逆引きマップを構築
+  const englishToJp = {};
+  rawHeaders.forEach(h => {
+    const eng = COL_MAP[h] || h;
+    englishToJp[eng] = h;
+  });
 
   for (let i = 1; i < data.length; i++) {
     if (Number(data[i][0]) === itemId) {
       for (const [key, value] of Object.entries(updates)) {
-        const colIndex = headers.indexOf(key);
+        // フロントから英語キーが来るので、日本語ヘッダーに変換して検索
+        const jpHeader = englishToJp[key] || key;
+        const colIndex = rawHeaders.indexOf(jpHeader);
         if (colIndex >= 0) {
           sheet.getRange(i + 1, colIndex + 1).setValue(value);
         }
