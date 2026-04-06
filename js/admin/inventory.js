@@ -240,7 +240,7 @@ function injectItemModal() {
           <div class="form-label">
             アイコン
             <input type="hidden" id="item-modal-emoji" />
-            <div id="item-modal-icon-picker" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; max-height:180px; overflow-y:auto; padding:4px; border:1px solid var(--color-border,#ddd); border-radius:8px;"></div>
+            <div id="item-modal-icon-picker" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; max-height:200px; overflow-y:auto; padding:8px; background:#F9F8F5; border-radius:12px;"></div>
           </div>
           <label class="form-label" id="item-modal-stock-label">
             初期在庫数（-1 = 無制限）
