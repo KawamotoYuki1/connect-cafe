@@ -347,21 +347,12 @@
 }
 
 .nav-tab__item.is-active {
-  color: var(--color-text-inverse);
-}
-
-.nav-tab__item.is-active::before {
-  content: "";
-  position: absolute;
-  inset: 6px 8px;
-  background: var(--color-primary);
-  border-radius: var(--radius-pill);
-  z-index: -1;
-  transition: var(--transition-colors);
+  color: var(--color-primary);
+  font-weight: var(--weight-semibold);
 }
 
 .nav-tab__item.is-active svg {
-  color: var(--color-text-inverse);
+  color: var(--color-primary);
 }
 
 .nav-tab__item.is-active::after {
@@ -370,9 +361,9 @@
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 32px;
-  height: 3px;
-  background: var(--color-primary-dark);
+  width: 24px;
+  height: 2.5px;
+  background: var(--color-primary);
   border-radius: 0 0 var(--radius-pill) var(--radius-pill);
 }
 
@@ -439,26 +430,13 @@
 }
 
 .menu-item.is-selected {
-  border-color: var(--color-primary);
+  border-color: transparent;
   background: var(--color-primary-ghost);
-  box-shadow: 0 0 0 1px var(--color-primary);
+  box-shadow: none;
 }
 
 /* Check indicator when selected */
-.menu-item.is-selected::after {
-  content: "";
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
-  background: var(--color-primary);
-  border-radius: var(--radius-round);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 12px;
-}
+/* .menu-item.is-selected::after - 削除（cart-btnの✓と2重表示になるため） */
 
 .menu-item.is-disabled {
   opacity: 0.5;
@@ -1154,9 +1132,9 @@
   left: 0;
   right: 0;
   padding: var(--space-3) var(--space-4);
-  background: var(--color-bg);
-  border-top: 1px solid var(--color-border);
-  box-shadow: var(--shadow-float);
+  background: var(--color-bg-warm, #F9F8F5);
+  border-top: 1px solid var(--color-border-light, #ECEAE5);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
   z-index: var(--z-header);
   display: flex;
   flex-direction: column;
