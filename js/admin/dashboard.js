@@ -11,6 +11,7 @@ import { todayJST } from '../utils/date-utils.js';
 
 let initialized = false;
 let currentPeriod = 'today';
+let currentUnit = 'count'; // 'count' or 'amount'
 
 // ---------- Public ----------
 
@@ -28,6 +29,17 @@ export function initDashboard() {
     currentPeriod = btn.dataset.period;
     document.querySelectorAll('#dashboard-period-tabs button').forEach(b => {
       b.className = b.dataset.period === currentPeriod ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-secondary';
+    });
+    loadDashboard();
+  });
+
+  // Unit tab click handler (個数/金額)
+  document.getElementById('dashboard-unit-tabs')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-unit]');
+    if (!btn) return;
+    currentUnit = btn.dataset.unit;
+    document.querySelectorAll('#dashboard-unit-tabs button').forEach(b => {
+      b.className = b.dataset.unit === currentUnit ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-secondary';
     });
     loadDashboard();
   });
@@ -222,16 +234,20 @@ function renderChart(transactions, period) {
     return;
   }
 
-  const maxCount = Math.max(...groups.map(g => g.pointCount + g.paypayCount), 1);
+  const isAmount = currentUnit === 'amount';
+  const getPoint = g => isAmount ? g.pointAmount : g.pointCount;
+  const getPaypay = g => isAmount ? g.paypayAmount : g.paypayCount;
+  const maxVal = Math.max(...groups.map(g => getPoint(g) + getPaypay(g)), 1);
+  const formatVal = v => isAmount ? `¥${v.toLocaleString()}` : String(v);
 
   barsEl.innerHTML = groups.map(g => {
-    const total = g.pointCount + g.paypayCount;
-    const heightPct = Math.max((total / maxCount) * 100, 2);
-    const pointPct = total > 0 ? (g.pointCount / total) * 100 : 0;
-    const paypayPct = total > 0 ? (g.paypayCount / total) * 100 : 0;
+    const total = getPoint(g) + getPaypay(g);
+    const heightPct = Math.max((total / maxVal) * 100, 2);
+    const pointPct = total > 0 ? (getPoint(g) / total) * 100 : 0;
+    const paypayPct = total > 0 ? (getPaypay(g) / total) * 100 : 0;
     return `
       <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0">
-        <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:4px">${total}</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:4px">${formatVal(total)}</div>
         <div style="width:100%;max-width:40px;height:${heightPct}%;border-radius:4px 4px 0 0;overflow:hidden;display:flex;flex-direction:column">
           <div style="flex:${pointPct};background:var(--color-primary, #22c55e)"></div>
           <div style="flex:${paypayPct};background:var(--color-amber, #f59e0b)"></div>
@@ -274,15 +290,18 @@ function groupTransactions(txList, period) {
     }
 
     if (!buckets.has(key)) {
-      buckets.set(key, { key, label, pointCount: 0, paypayCount: 0 });
+      buckets.set(key, { key, label, pointCount: 0, paypayCount: 0, pointAmount: 0, paypayAmount: 0 });
     }
 
     const bucket = buckets.get(key);
     const type = tx.paymentType || tx.payment_type || 'point';
+    const price = Number(tx.price || 0);
     if (type === 'paypay') {
       bucket.paypayCount++;
+      bucket.paypayAmount += price;
     } else {
       bucket.pointCount++;
+      bucket.pointAmount += price;
     }
   }
 

@@ -985,8 +985,12 @@
 
           <!-- Chart -->
           <div id="dashboard-chart" style="display:none" class="admin-section">
-            <div class="admin-section__header">
+            <div class="admin-section__header" style="display:flex;align-items:center;justify-content:space-between">
               <h3 class="admin-section__title" id="dashboard-chart-title">週間推移</h3>
+              <div id="dashboard-unit-tabs" style="display:flex;gap:4px">
+                <button class="btn btn-sm btn-primary" data-unit="count">個数</button>
+                <button class="btn btn-sm btn-secondary" data-unit="amount">金額</button>
+              </div>
             </div>
             <div class="admin-section__body" style="padding:16px">
               <div id="dashboard-chart-bars" style="display:flex;align-items:flex-end;gap:4px;height:160px"></div>
