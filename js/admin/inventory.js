@@ -199,17 +199,19 @@ function injectReorderSaveButton() {
   const page = document.getElementById('admin-page-inventory');
   if (!page) return;
 
-  const btn = document.createElement('button');
-  btn.id = 'inventory-reorder-save-btn';
-  btn.className = 'btn btn-primary';
-  btn.textContent = '並べ替え保存';
-  btn.style.cssText = 'display: none; margin: var(--space-4) 0; width: 100%;';
-  // テーブルの後に挿入
-  const table = page.querySelector('table');
-  if (table) {
-    table.parentElement.insertBefore(btn, table.nextSibling);
+  const bar = document.createElement('div');
+  bar.id = 'inventory-reorder-save-btn';
+  bar.style.cssText = 'display:none;position:sticky;top:0;z-index:10;padding:12px 16px;background:#FEF3C7;border:1px solid #F59E0B;border-radius:10px;margin-bottom:12px;text-align:center;';
+  bar.innerHTML = `
+    <span style="font-size:13px;font-weight:600;color:#92400E;margin-right:12px">⚠ 並べ替えが変更されています</span>
+    <button class="btn btn-primary btn-sm" id="inventory-reorder-save-action" style="padding:8px 24px;font-weight:600">保存する</button>
+  `;
+  // テーブルの前に挿入
+  const section = page.querySelector('.admin-section__body');
+  if (section) {
+    section.prepend(bar);
   } else {
-    page.appendChild(btn);
+    page.prepend(bar);
   }
 }
 
@@ -283,7 +285,7 @@ function setupInventoryEvents() {
 
   // 並べ替え保存ボタン
   document.addEventListener('click', (e) => {
-    if (e.target.closest('#inventory-reorder-save-btn')) {
+    if (e.target.closest('#inventory-reorder-save-action') || e.target.closest('#inventory-reorder-save-btn')) {
       handleReorderSave();
     }
   });
