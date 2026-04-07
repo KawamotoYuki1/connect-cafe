@@ -4,13 +4,13 @@
    ============================================================ */
 
 :root {
-  /* ---- Brand Colors ---- */
-  --color-primary:        #1D9E75;
-  --color-primary-dark:   #168A65;
-  --color-primary-darker: #085041;
-  --color-primary-light:  #9FE1CB;
-  --color-primary-lighter:#E1F5EE;
-  --color-primary-ghost:  #F0FAF5;
+  /* ---- Brand Colors (Cafe Brown) ---- */
+  --color-primary:        #8B6544;
+  --color-primary-dark:   #6F4E35;
+  --color-primary-darker: #3E2723;
+  --color-primary-light:  #C4A882;
+  --color-primary-lighter:#F0E6D8;
+  --color-primary-ghost:  #FAF6F0;
 
   /* ---- Amber / PayPay ---- */
   --color-amber:          #BA7517;
@@ -20,7 +20,7 @@
   --color-amber-ghost:    #FDF7EC;
 
   /* ---- Status ---- */
-  --color-success:        #1D9E75;
+  --color-success:        #5A8F54;
   --color-warning:        #BA7517;
   --color-danger:         #C4453A;
   --color-danger-light:   #FBEAE8;
@@ -34,9 +34,9 @@
   --color-text-placeholder:#B0AFA8;
   --color-text-inverse:   #FFFFFF;
 
-  --color-bg:             #FFFFFF;
-  --color-bg-warm:        #F9F8F5;
-  --color-bg-muted:       #F4F2EE;
+  --color-bg:             #FFFDFB;
+  --color-bg-warm:        #FAF6F0;
+  --color-bg-muted:       #F5EFE6;
   --color-bg-overlay:     rgba(44, 44, 42, 0.45);
 
   --color-border:         #E0DED8;

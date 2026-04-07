@@ -3,8 +3,8 @@
   "short_name": "Connect Cafe",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#085041",
-  "theme_color": "#085041",
+  "background_color": "#3E2723",
+  "theme_color": "#3E2723",
   "icons": [
     {
       "src": "assets/icon-192.svg",

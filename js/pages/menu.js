@@ -247,7 +247,7 @@ function updateOrderBar() {
     if (freeItems.length > 0) {
       const names = freeItems.map(i => escapeHtml(i.item_name ?? i.name ?? '')).join('、');
       html += `<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-tertiary)">
-        <span style="background:#E1F5EE;color:var(--color-primary);border-radius:4px;padding:1px 6px;font-size:10px">FREE</span>
+        <span style="background:#F0E6D8;color:var(--color-primary);border-radius:4px;padding:1px 6px;font-size:10px">FREE</span>
         ${names}
       </div>`;
     }

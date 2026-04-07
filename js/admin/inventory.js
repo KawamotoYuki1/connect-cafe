@@ -444,7 +444,7 @@ function openItemModal(mode, itemId) {
       return `<div style="grid-column:1/-1;font-size:11px;font-weight:700;color:#888;margin-top:6px;padding-bottom:4px;border-bottom:1px solid #E0DED8">${cat.label}</div>` +
         cat.icons.map(key => {
           const isSelected = key === currentKey;
-          const bg = isSelected ? 'background:#E1F5EE;outline:2px solid #1D9E75;' : 'background:#fff;';
+          const bg = isSelected ? 'background:#F0E6D8;outline:2px solid #8B6544;' : 'background:#fff;';
           return `<div class="icon-pick" data-icon-key="${key}" style="cursor:pointer;padding:6px;border-radius:10px;display:flex;align-items:center;justify-content:center;${bg}transition:all 0.1s" title="${key}">${getIcon(key, 32)}</div>`;
         }).join('');
     }).join('');
@@ -454,8 +454,8 @@ function openItemModal(mode, itemId) {
       if (!el) return;
       emojiInput.value = el.dataset.iconKey;
       picker.querySelectorAll('.icon-pick').forEach(p => { p.style.outline = ''; p.style.background = '#fff'; });
-      el.style.outline = '2px solid #1D9E75';
-      el.style.background = '#E1F5EE';
+      el.style.outline = '2px solid #8B6544';
+      el.style.background = '#F0E6D8';
     };
 
     if (currentKey) emojiInput.value = currentKey;
