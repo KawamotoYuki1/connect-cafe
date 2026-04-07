@@ -124,10 +124,11 @@ function syncTable(table) {
   Logger.log(config.sheetName + ': ' + rows.length + '行書き込み完了');
 }
 
-// ===== 月初ポイントリセット =====
+// ===== 月初ポイント加算 =====
 
 /**
- * 毎月1日に実行: 前月ポイントを期限切れにし、全アクティブユーザーに1,000pt付与
+ * 毎月1日に実行: 全アクティブユーザーの残高に+1,000pt加算（繰り越し方式）
+ * ポイントは消失せず、毎月加算される
  */
 function monthlyPointReset() {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -138,56 +139,81 @@ function monthlyPointReset() {
   var now = new Date();
   var ym = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM');
 
-  // 1. 前月分を期限切れに
-  var expireUrl = SUPABASE_URL + '/rest/v1/point_balances?year_month=neq.' + ym + '&expired=eq.false';
-  UrlFetchApp.fetch(expireUrl, {
-    method: 'patch',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal',
-    },
-    payload: JSON.stringify({ expired: true }),
-    muteHttpExceptions: true,
-  });
-  Logger.log('前月分ポイントを期限切れに設定');
-
-  // 2. 全アクティブユーザーを取得
+  // 全アクティブユーザーを取得
   var users = supabaseFetch('users', 'select=email&is_active=eq.true');
 
-  // 3. 今月分が既にあるユーザーを取得
-  var existing = supabaseFetch('point_balances', 'select=email&year_month=eq.' + ym + '&expired=eq.false');
-  var existingEmails = existing.map(function(r) { return r.email; });
-
-  // 4. 未付与ユーザーにポイント付与
   var granted = 0;
   for (var i = 0; i < users.length; i++) {
-    if (existingEmails.indexOf(users[i].email) >= 0) continue;
+    var email = users[i].email;
 
-    var insertUrl = SUPABASE_URL + '/rest/v1/point_balances';
-    UrlFetchApp.fetch(insertUrl, {
-      method: 'post',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal',
-      },
-      payload: JSON.stringify({
-        email: users[i].email,
-        year_month: ym,
-        granted: 1000,
-        used: 0,
-        granted_at: now.toISOString(),
-        expired: false,
-      }),
-      muteHttpExceptions: true,
-    });
+    // 今月分が既にあるか確認
+    var existing = supabaseFetch('point_balances', 'select=*&email=eq.' + encodeURIComponent(email) + '&year_month=eq.' + ym + '&expired=eq.false');
+
+    if (existing.length > 0) {
+      // 既に今月分がある → grantedに+1000を加算
+      var current = existing[0];
+      var newGranted = (current.granted || 0) + 1000;
+      var patchUrl = SUPABASE_URL + '/rest/v1/point_balances?id=eq.' + current.id;
+      UrlFetchApp.fetch(patchUrl, {
+        method: 'patch',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        payload: JSON.stringify({ granted: newGranted }),
+        muteHttpExceptions: true,
+      });
+    } else {
+      // 今月分がない → 前月の残高を繰り越して新規作成
+      // 前月の残高を取得
+      var prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      var prevYm = Utilities.formatDate(prevMonth, 'Asia/Tokyo', 'yyyy-MM');
+      var prevBalance = supabaseFetch('point_balances', 'select=remaining&email=eq.' + encodeURIComponent(email) + '&year_month=eq.' + prevYm);
+      var carryOver = prevBalance.length > 0 ? (prevBalance[0].remaining || 0) : 0;
+
+      // 繰り越し分 + 1000pt で新規作成
+      var insertUrl = SUPABASE_URL + '/rest/v1/point_balances';
+      UrlFetchApp.fetch(insertUrl, {
+        method: 'post',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        payload: JSON.stringify({
+          email: email,
+          year_month: ym,
+          granted: carryOver + 1000,
+          used: 0,
+          granted_at: now.toISOString(),
+          expired: false,
+        }),
+        muteHttpExceptions: true,
+      });
+
+      // 前月分を期限切れに（データ整理用）
+      if (prevBalance.length > 0) {
+        var expireUrl = SUPABASE_URL + '/rest/v1/point_balances?email=eq.' + encodeURIComponent(email) + '&year_month=eq.' + prevYm + '&expired=eq.false';
+        UrlFetchApp.fetch(expireUrl, {
+          method: 'patch',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          },
+          payload: JSON.stringify({ expired: true }),
+          muteHttpExceptions: true,
+        });
+      }
+    }
     granted++;
   }
 
-  Logger.log('月次ポイントリセット完了: ' + ym + ' / ' + granted + '人に1,000pt付与');
+  Logger.log('月次ポイント加算完了: ' + ym + ' / ' + granted + '人に+1,000pt');
 }
 
 /**

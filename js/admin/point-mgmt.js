@@ -164,7 +164,7 @@ async function handleGrantPoints() {
 async function handleMonthlyReset() {
   // First confirmation
   const first = await showModal({
-    title: '月次リセットを実行しますか？',
+    title: '月次ポイント付与を実行しますか？',
     message: '全ユーザーのポイントがリセットされ、今月の付与ポイントが再設定されます。この操作は取り消せません。',
     confirmText: '次へ進む',
     cancelText: 'キャンセル',
@@ -176,7 +176,7 @@ async function handleMonthlyReset() {
   // Second confirmation (double confirm)
   const second = await showModal({
     title: '本当に実行しますか？',
-    message: '月次リセットは通常自動実行されます。手動実行は緊急時のみ使用してください。実行してよろしいですか？',
+    message: '月次ポイント付与は通常自動実行されます。手動実行は緊急時のみ使用してください。実行してよろしいですか？',
     confirmText: 'リセットを実行',
     cancelText: 'やめる',
     type: 'danger',
@@ -193,9 +193,9 @@ async function handleMonthlyReset() {
   const result = await api.monthlyReset();
 
   if (result.error) {
-    showToast(`月次リセットに失敗しました: ${result.error}`, 'error');
+    showToast(`月次ポイント付与に失敗しました: ${result.error}`, 'error');
   } else {
-    showToast('月次リセットが完了しました', 'success');
+    showToast('月次ポイント付与が完了しました', 'success');
     await loadPointData();
   }
 
@@ -203,7 +203,7 @@ async function handleMonthlyReset() {
     resetBtn.disabled = false;
     resetBtn.innerHTML = `
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-      月次リセット`;
+      月次ポイント付与`;
   }
 }
 
