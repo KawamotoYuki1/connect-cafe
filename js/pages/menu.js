@@ -129,8 +129,6 @@ function renderMenu() {
       stockHtml = `<span class="menu-item__stock menu-item__stock--low">残${stockNum}</span>`;
     } else if (!isUnlimited) {
       stockHtml = `<span class="menu-item__stock">在庫${stockNum}</span>`;
-    } else if (isFree) {
-      stockHtml = '<span class="menu-item__stock">飲み放題</span>';
     }
 
     // 価格
