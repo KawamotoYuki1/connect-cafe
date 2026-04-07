@@ -535,6 +535,9 @@
       font-size: var(--text-sm);
       font-weight: var(--weight-semibold);
       margin-bottom: var(--space-1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .stocktake-item__system {
@@ -967,9 +970,28 @@
              ============================================================ -->
         <div id="admin-page-dashboard" class="admin-page is-active">
 
+          <!-- Period Tabs -->
+          <div class="admin-period-tabs" id="dashboard-period-tabs" style="display:flex;gap:8px;margin-bottom:16px">
+            <button class="btn btn-sm btn-primary" data-period="today">今日</button>
+            <button class="btn btn-sm btn-secondary" data-period="week">週</button>
+            <button class="btn btn-sm btn-secondary" data-period="month">月</button>
+            <button class="btn btn-sm btn-secondary" data-period="year">年</button>
+          </div>
+
           <!-- Stat Cards -->
           <div class="admin-stats" id="dashboard-stats">
             <!-- Rendered by JS -->
+          </div>
+
+          <!-- Chart -->
+          <div id="dashboard-chart" style="display:none" class="admin-section">
+            <div class="admin-section__header">
+              <h3 class="admin-section__title" id="dashboard-chart-title">週間推移</h3>
+            </div>
+            <div class="admin-section__body" style="padding:16px">
+              <div id="dashboard-chart-bars" style="display:flex;align-items:flex-end;gap:4px;height:160px"></div>
+              <div id="dashboard-chart-labels" style="display:flex;gap:4px;margin-top:8px"></div>
+            </div>
           </div>
 
           <!-- Quick Actions -->

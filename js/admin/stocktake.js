@@ -5,6 +5,7 @@
  * with system records.
  */
 import { api } from '../api.js';
+import { getIcon } from '../icons.js';
 import { showToast, showModal } from './admin-app.js';
 
 // ---------- State ----------
@@ -69,9 +70,11 @@ function renderStocktakeGrid() {
 
   grid.innerHTML = stockItems.map((item) => {
     const systemCount = item.stock ?? item.quantity ?? 0;
+    const iconKey = item.icon_svg ?? item.iconSvg;
+    const iconHtml = iconKey ? getIcon(iconKey, 32) : (item.image_emoji ?? item.emoji ?? '☕');
     return `
       <div class="stocktake-item" data-stocktake-id="${escapeAttr(item.id)}">
-        <div class="stocktake-item__emoji">${item.emoji || '📦'}</div>
+        <div class="stocktake-item__emoji">${iconHtml}</div>
         <div class="stocktake-item__info">
           <div class="stocktake-item__name">${escapeHtml(item.name)}</div>
           <div class="stocktake-item__system">システム: <strong>${systemCount}</strong></div>
