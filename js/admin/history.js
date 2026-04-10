@@ -60,7 +60,7 @@ function renderHistoryTable() {
 
   let filtered = historyData;
   if (paymentFilter !== 'all') {
-    filtered = historyData.filter((tx) => tx.paymentType === paymentFilter);
+    filtered = historyData.filter((tx) => (tx.payment_type || tx.paymentType) === paymentFilter);
   }
 
   if (filtered.length === 0) {
@@ -74,24 +74,32 @@ function renderHistoryTable() {
   }
 
   tbody.innerHTML = filtered.map((tx) => {
-    const amount = tx.amount ?? tx.price ?? 0;
-    const isPoint = tx.paymentType === 'point';
+    const pType = tx.payment_type || tx.paymentType || 'point';
+    const isPoint = pType === 'point';
+    const isFree = pType === 'free';
+    const isPayPay = pType === 'paypay';
+    const itemName = tx.item_name || tx.itemName || '-';
+    const category = tx.category || '';
+    const catLabel = { drink: 'ドリンク', snack: 'おやつ', meal: '食事', free: '無料' }[category] || '-';
+    const userName = tx.email || tx.userName || '-';
+    const price = Number(tx.price ?? 0);
+    const pointsUsed = Number(tx.points_used ?? tx.pointsUsed ?? 0);
+    const amountText = isPayPay ? `¥${price.toLocaleString()}` : (isFree ? '無料' : `${pointsUsed || price} pt`);
+    const amountColor = isPayPay ? '#DC2626' : 'var(--color-primary)';
+    const badgeStyle = isPayPay ? 'background:#FEE2E2;color:#DC2626' : 'background:#F0E6D8;color:#3E2723';
+    const badgeLabel = isPayPay ? 'PayPay' : (isFree ? '無料' : 'ポイント');
 
     return `
       <tr>
-        <td style="white-space:nowrap; font-size: var(--text-sm)">${formatDate(tx.timestamp || tx.date)}</td>
-        <td>
-          <div style="font-weight: var(--weight-medium)">${escapeHtml(tx.userName || tx.email || '-')}</div>
-        </td>
-        <td>${escapeHtml(tx.itemName || '-')}</td>
-        <td><span class="badge">${escapeHtml(tx.category || '-')}</span></td>
-        <td class="text-right" style="font-weight: var(--weight-semibold)">
-          ${isPoint ? `${amount} pt` : formatPrice(amount)}
+        <td style="white-space:nowrap;font-size:12px">${formatDate(tx.timestamp || tx.created_at || tx.date)}</td>
+        <td style="font-size:12px">${escapeHtml(userName)}</td>
+        <td style="font-weight:600">${escapeHtml(itemName)}</td>
+        <td><span class="badge">${escapeHtml(catLabel)}</span></td>
+        <td class="text-right" style="font-weight:700;color:${amountColor}">
+          ${amountText}
         </td>
         <td class="text-center">
-          <span class="badge ${isPoint ? 'badge-green' : 'badge-amber'}">
-            ${isPoint ? 'ポイント' : 'PayPay'}
-          </span>
+          <span class="badge" style="${badgeStyle}">${badgeLabel}</span>
         </td>
         <td class="text-center">
           <span class="badge ${tx.status === 'cancelled' ? 'badge-danger' : 'badge-green'}">
@@ -108,7 +116,7 @@ function renderHistoryTable() {
 function exportCSV() {
   let filtered = historyData;
   if (paymentFilter !== 'all') {
-    filtered = historyData.filter((tx) => tx.paymentType === paymentFilter);
+    filtered = historyData.filter((tx) => (tx.payment_type || tx.paymentType) === paymentFilter);
   }
 
   if (filtered.length === 0) {
@@ -116,17 +124,22 @@ function exportCSV() {
     return;
   }
 
-  const headers = ['日時', 'ユーザー', 'メール', '商品', 'カテゴリ', '金額', '支払方法', 'ステータス'];
-  const rows = filtered.map((tx) => [
-    tx.timestamp || tx.date || '',
-    tx.userName || '',
-    tx.email || '',
-    tx.itemName || '',
-    tx.category || '',
-    tx.amount ?? tx.price ?? 0,
-    tx.paymentType === 'point' ? 'ポイント' : 'PayPay',
-    tx.status === 'cancelled' ? 'キャンセル' : '完了',
-  ]);
+  const headers = ['日時', 'メール', '商品', 'カテゴリ', '金額', '支払方法', 'ステータス'];
+  const rows = filtered.map((tx) => {
+    const pType = tx.payment_type || tx.paymentType || 'point';
+    const price = Number(tx.price ?? 0);
+    const pointsUsed = Number(tx.points_used ?? tx.pointsUsed ?? 0);
+    const pLabel = pType === 'paypay' ? 'PayPay' : (pType === 'free' ? '無料' : 'ポイント');
+    return [
+      tx.timestamp || tx.created_at || tx.date || '',
+      tx.email || '',
+      tx.item_name || tx.itemName || '',
+      tx.category || '',
+      pType === 'paypay' ? price : (pointsUsed || price),
+      pLabel,
+      tx.status === 'cancelled' ? 'キャンセル' : '完了',
+    ];
+  });
 
   const csvContent = [headers, ...rows]
     .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))

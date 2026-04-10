@@ -390,6 +390,7 @@ async function handlePointPurchase() {
   updateOrderBar();
   await Promise.all([loadMenu(), loadUserState()]);
   renderMenu();
+  window.dispatchEvent(new Event('cc:balance-updated'));
 }
 
 async function handlePaypayPurchase() {
@@ -402,9 +403,9 @@ async function handlePaypayPurchase() {
   const total = paypayItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
 
   const confirmed = await showModal({
-    title: 'PayPay で購入',
-    message: `「${names}」を合計 ¥${total.toLocaleString()} で購入します。\nカフェ設置のQRコードをPayPayでスキャンしてください。`,
-    confirmText: '購入記録する',
+    title: 'PayPayで支払う',
+    message: `『${names}』\n\n支払金額を PayPayアプリに\n手入力してください\n\n💰 ¥${total.toLocaleString()}\n\n「PayPayを開く」を押すと\nアプリが起動します`,
+    confirmText: 'PayPayを開く',
     cancelText: 'キャンセル',
     type: 'warning',
   });
@@ -423,12 +424,15 @@ async function handlePaypayPurchase() {
 
   if (!hasError) {
     showToast(`${names} をPayPayで購入しました`, 'paypay');
+    // PayPay店舗QRコード直接リンクへ遷移（モバイルはPayPayアプリが起動）
+    window.location.href = 'https://qr.paypay.ne.jp/281801051YGB8Jx6O0vjLw3L';
   }
   selectedItems = [];
   updateOrderBar();
 
   await Promise.all([loadMenu(), loadUserState()]);
   renderMenu();
+  window.dispatchEvent(new Event('cc:balance-updated'));
 }
 
 // ---- Initialization ----

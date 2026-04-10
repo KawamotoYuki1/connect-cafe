@@ -325,23 +325,36 @@ function renderRecentTable(data) {
     return;
   }
 
-  tbody.innerHTML = txList.map((tx) => `
+  tbody.innerHTML = txList.map((tx) => {
+    const pType = tx.payment_type || tx.paymentType || 'point';
+    const itemName = tx.item_name || tx.itemName || '-';
+    const category = tx.category || '';
+    const catLabel = { drink: 'ドリンク', snack: 'おやつ', meal: '食事', free: '無料' }[category] || '';
+    const userName = tx.email || tx.userName || '-';
+    const price = Number(tx.price || 0);
+    const pointsUsed = Number(tx.points_used || tx.pointsUsed || 0);
+    const isPayPay = pType === 'paypay';
+    const badgeStyle = isPayPay ? 'background:#FEE2E2;color:#DC2626' : 'background:#F0E6D8;color:#3E2723';
+    const badgeLabel = isPayPay ? 'PayPay' : (pType === 'free' ? '無料' : 'ポイント');
+    const amountText = isPayPay ? `¥${price.toLocaleString()}` : `${pointsUsed || price} pt`;
+    const amountColor = isPayPay ? '#DC2626' : 'var(--color-primary)';
+
+    return `
     <tr>
-      <td style="white-space:nowrap">${formatDate(tx.timestamp || tx.date)}</td>
-      <td>${escapeHtml(tx.userName || tx.email || '-')}</td>
+      <td style="white-space:nowrap;font-size:12px">${formatDate(tx.timestamp || tx.created_at || tx.date)}</td>
+      <td style="font-size:12px">${escapeHtml(userName)}</td>
       <td>
-        <span style="font-weight: var(--weight-medium)">${escapeHtml(tx.itemName || '-')}</span>
+        <div style="font-weight:600">${escapeHtml(itemName)}</div>
+        ${catLabel ? `<div style="font-size:10px;color:#888;margin-top:2px">${escapeHtml(catLabel)}</div>` : ''}
       </td>
-      <td class="text-right" style="font-weight: var(--weight-semibold)">
-        ${tx.paymentType === 'point' ? `${tx.amount ?? tx.price ?? 0} pt` : formatPrice(tx.amount ?? tx.price ?? 0)}
+      <td class="text-right" style="font-weight:700;color:${amountColor}">
+        ${amountText}
       </td>
       <td>
-        <span class="badge ${tx.paymentType === 'paypay' ? 'badge-amber' : 'badge-green'}">
-          ${tx.paymentType === 'paypay' ? 'PayPay' : 'ポイント'}
-        </span>
+        <span class="badge" style="${badgeStyle}">${badgeLabel}</span>
       </td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 // ---------- Helpers ----------

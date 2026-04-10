@@ -40,12 +40,12 @@ function formatAmount(tx) {
 function paymentBadgeHtml(tx) {
   const pType = getPaymentType(tx);
   if (pType === 'point') {
-    return '<span class="badge badge-green">ポイント</span>';
+    return '<span class="badge" style="background:#F0E6D8;color:#3E2723">ポイント</span>';
   }
   if (pType === 'free') {
-    return '<span class="badge badge-green">無料</span>';
+    return '<span class="badge" style="background:#F0E6D8;color:#8B6544">無料</span>';
   }
-  return '<span class="badge badge-amber">PayPay</span>';
+  return '<span class="badge" style="background:#FEE2E2;color:#DC2626">PayPay</span>';
 }
 
 // ---- Data Loading ----
@@ -124,7 +124,7 @@ function renderTransactions() {
     const pType = getPaymentType(tx);
     const badge = paymentBadgeHtml(tx);
     const amountColor = (pType === 'point' || pType === 'free')
-      ? 'var(--color-primary)' : 'var(--color-amber)';
+      ? 'var(--color-primary)' : '#DC2626';
 
     // Date separator
     const dateKey = rawDate.slice(0, 10);

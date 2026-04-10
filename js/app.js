@@ -26,12 +26,16 @@ export async function initApp() {
       document.body.classList.remove('is-guest');
       updateUserUI(user);
       await registerIfNeeded();
+      await updateHeaderPoints();
     } else {
       document.body.classList.remove('is-authenticated');
       document.body.classList.add('is-guest');
       updateUserUI(null);
     }
   });
+
+  // 購入イベントでポイント再読み込み
+  window.addEventListener('cc:balance-updated', updateHeaderPoints);
 
   // Set up navigation
   setupNavigation();
@@ -42,12 +46,13 @@ export async function initApp() {
     document.body.classList.remove('is-guest');
     updateUserUI(getUser());
     await registerIfNeeded();
+    await updateHeaderPoints();
   } else {
     document.body.classList.add('is-guest');
   }
 
-  // Show initial page based on hash
-  const hash = window.location.hash.slice(1) || 'home';
+  // Show initial page based on hash（デフォルトはメニュー）
+  const hash = window.location.hash.slice(1) || 'menu';
   showPage(hash);
 }
 
@@ -64,6 +69,23 @@ async function registerIfNeeded() {
     } else {
       console.error('[App] Registration failed:', reg?.error);
     }
+  }
+}
+
+/**
+ * ヘッダーのポイント表示を更新
+ */
+export async function updateHeaderPoints() {
+  const el = document.getElementById('header-points');
+  if (!el) return;
+  try {
+    const result = await api.getBalance();
+    if (result && !result.error) {
+      const remaining = result.remaining ?? ((result.granted ?? 0) - (result.used ?? 0));
+      el.textContent = Number(remaining).toLocaleString();
+    }
+  } catch (err) {
+    console.error('[App] header points update failed:', err);
   }
 }
 
@@ -100,7 +122,7 @@ function updateUserUI(user) {
 function setupNavigation() {
   // Handle hash changes
   window.addEventListener('hashchange', () => {
-    const pageId = window.location.hash.slice(1) || 'home';
+    const pageId = window.location.hash.slice(1) || 'menu';
     showPage(pageId);
   });
 
@@ -219,10 +241,15 @@ export function showModal({ title, message, confirmText = 'OK', cancelText = '�
       transition: 'transform 0.2s ease',
     });
 
+    // メッセージ内の ¥数字 部分を大きく強調
+    const escapedMsg = escapeHtml(message)
+      .replace(/💰\s*¥([\d,]+)/g, '<div style="font-size:42px;font-weight:800;color:#DC2626;margin:16px 0;letter-spacing:0.02em">¥$1</div>')
+      .replace(/\n/g, '<br>');
+
     modal.innerHTML = `
-      <h3 style="margin:0 0 8px;font-size:18px;font-weight:700;color:#111">${escapeHtml(title)}</h3>
-      <p style="margin:0 0 24px;font-size:14px;color:#555;line-height:1.5">${escapeHtml(message)}</p>
-      <div style="display:flex;gap:12px;justify-content:flex-end">
+      <h3 style="margin:0 0 12px;font-size:18px;font-weight:700;color:#111;text-align:center">${escapeHtml(title)}</h3>
+      <div style="margin:0 0 24px;font-size:14px;color:#555;line-height:1.6;text-align:center">${escapedMsg}</div>
+      <div style="display:flex;gap:12px;justify-content:center">
         <button id="modal-cancel" style="padding:10px 20px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#555;font-size:14px;font-weight:500;cursor:pointer">${escapeHtml(cancelText)}</button>
         <button id="modal-confirm" style="padding:10px 20px;border:none;border-radius:10px;background:${btnColor};color:#fff;font-size:14px;font-weight:500;cursor:pointer">${escapeHtml(confirmText)}</button>
       </div>

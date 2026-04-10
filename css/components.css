@@ -272,10 +272,12 @@
 }
 
 .nav-header__title {
-  font-size: var(--text-md);
+  font-size: 14px;
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-wide);
-  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-header__action {

@@ -723,6 +723,18 @@ export const api = {
     invalidateCache(['getMenu']);
     const sb = await sbReady;
 
+    // 外部キー制約回避: 関連する取引履歴のitem_idをnullに
+    // （取引履歴は商品名で保持されているので参照情報だけ消える）
+    const { error: txErr } = await sb
+      .from('transactions')
+      .update({ item_id: null })
+      .eq('item_id', itemId);
+    if (txErr) return { error: '取引履歴の更新失敗: ' + txErr.message };
+
+    // 在庫ログも同様
+    await sb.from('inventory_log').update({ item_id: null }).eq('item_id', itemId);
+
+    // 商品を削除
     const { error } = await sb.from('menu_items').delete().eq('id', itemId);
     if (error) return { error: error.message };
 

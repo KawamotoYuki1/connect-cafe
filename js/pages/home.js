@@ -41,9 +41,9 @@ function formatAmount(tx) {
 
 function paymentBadge(tx) {
   const pType = getPaymentType(tx);
-  if (pType === 'free') return '<span class="badge badge-green" style="font-size:10px">FREE</span>';
-  if (pType === 'point') return '<span class="badge badge-green" style="font-size:10px">ポイント</span>';
-  return '<span class="badge badge-amber" style="font-size:10px">PayPay</span>';
+  if (pType === 'free') return '<span class="badge" style="background:#F0E6D8;color:#8B6544;font-size:10px">FREE</span>';
+  if (pType === 'point') return '<span class="badge" style="background:#F0E6D8;color:#3E2723;font-size:10px">ポイント</span>';
+  return '<span class="badge" style="background:#FEE2E2;color:#DC2626;font-size:10px">PayPay</span>';
 }
 
 // ---- Data Loading ----
@@ -134,7 +134,7 @@ async function loadRecentHistory() {
           <div class="tx-item__name">${name}</div>
           <div class="tx-item__date">${escapeHtml(dateFormatted)} ${badge}</div>
         </div>
-        <div class="tx-item__amount" style="color:${pType === 'point' ? 'var(--color-primary)' : 'var(--color-amber)'}">
+        <div class="tx-item__amount" style="color:${pType === 'point' ? 'var(--color-primary)' : '#DC2626'}">
           -${escapeHtml(amount)}
         </div>
       </div>
