@@ -86,12 +86,12 @@
 
 /* PayPay amber */
 .btn-paypay {
-  background: var(--color-amber);
+  background: #DC2626;
   color: var(--color-text-inverse);
 }
 
 .btn-paypay:hover {
-  background: var(--color-amber-dark);
+  background: #B91C1C;
   box-shadow: var(--shadow-sm);
 }
 
