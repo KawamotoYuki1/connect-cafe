@@ -404,8 +404,8 @@ async function handlePaypayPurchase() {
 
   const confirmed = await showModal({
     title: 'PayPayで支払う',
-    message: `『${names}』\n\n💰 ¥${total.toLocaleString()}\n\n購入記録後にPayPayアプリが開きます`,
-    confirmText: '記録してPayPayを開く',
+    message: `『${names}』\n\n💰 ¥${total.toLocaleString()}\n\n購入記録後にカメラが開きますので\nQRコードを読み込んでください`,
+    confirmText: '記録してカメラを開く',
     cancelText: 'キャンセル',
     type: 'warning',
   });
@@ -429,26 +429,8 @@ async function handlePaypayPurchase() {
   window.dispatchEvent(new Event('cc:balance-updated'));
 
   if (!hasError) {
-    // PayPay支払い案内モーダル + カメラ起動ボタン
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    overlay.innerHTML = `
-      <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center">
-        <div style="font-size:48px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${total.toLocaleString()}</div>
-        <div style="font-size:15px;color:#333;font-weight:600;line-height:1.8;margin-bottom:24px">
-          カフェに設置のPayPay QRコードから<br>支払いを行ってください
-        </div>
-        <a href="paypay://"
-           style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border-radius:12px;font-weight:700;font-size:16px;text-decoration:none;margin-bottom:12px">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          PayPayを開く
-        </a>
-        <button style="padding:10px 24px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#555;font-size:14px;cursor:pointer;width:100%" id="paypay-close">閉じる</button>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    overlay.querySelector('#paypay-close').addEventListener('click', () => overlay.remove());
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    // PayPayスキャン画面を直接起動（カスタムURLスキーム）
+    window.location.href = 'paypay://scan';
   }
 }
 
