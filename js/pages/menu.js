@@ -353,72 +353,97 @@ async function handlePointPurchase() {
   if (selectedItems.length === 0) return;
 
   const { freeItems, pointItem, paypayItems } = classifyCart();
-  const paypayTotal = paypayItems.reduce((s, i) => s + Number(i.price), 0);
 
-  // 即座にカートクリア+タッチブロック
-  const items = [...selectedItems];
+  // ポイント対象商品（最高額1品）のみ購入
+  if (pointItem) {
+    const name = pointItem.item_name ?? pointItem.name;
+    const confirmed = await showModal({
+      title: 'ポイント消費',
+      message: `「${name}」を${Number(pointItem.price).toLocaleString()}ptで購入しますか？\n残高: ${userBalance}pt → ${userBalance - Number(pointItem.price)}pt`,
+      confirmText: '購入する',
+      cancelText: 'キャンセル',
+      type: 'primary',
+    });
+    if (!confirmed) return;
+
+    const result = await api.purchase(pointItem, 'point');
+    if (result.error) {
+      showToast(result.error, 'error');
+      return;
+    }
+    showToast(`${name} をポイントで購入しました`, 'success');
+  }
+
+  // 無料商品も同時に処理
+  for (const item of freeItems) {
+    await api.purchase(item, 'free');
+  }
+
+  // カートから処理済み商品を除去（PayPay分は残す）
+  if (paypayItems.length > 0) {
+    selectedItems = [...paypayItems];
+    showToast(`PayPay分 ¥${paypayItems.reduce((s, i) => s + Number(i.price), 0).toLocaleString()} はQRコードで支払いしてください`, 'info');
+  } else {
+    selectedItems = [];
+  }
+
+  updateOrderBar();
+  await Promise.all([loadMenu(), loadUserState()]);
+  renderMenu();
+  window.dispatchEvent(new Event('cc:balance-updated'));
+}
+
+async function handlePaypayPurchase() {
+  if (selectedItems.length === 0) return;
+
+  const { paypayItems } = classifyCart();
+  if (paypayItems.length === 0) return;
+
+  const names = paypayItems.map(i => i.item_name ?? i.name).join('、');
+  const total = paypayItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
+
+  // 購入記録
+  let hasError = false;
+  for (const item of paypayItems) {
+    const result = await api.purchase(item, 'paypay');
+    if (result.error) {
+      showToast(result.error, 'error');
+      hasError = true;
+      break;
+    }
+  }
+
   selectedItems = [];
   updateOrderBar();
+  await Promise.all([loadMenu(), loadUserState()]);
   renderMenu();
-
-  // タッチブロック用オーバーレイ（即表示）
-  const blocker = document.createElement('div');
-  blocker.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:9998;display:flex;align-items:center;justify-content:center;';
-  blocker.innerHTML = '<div style="color:#fff;font-size:16px;font-weight:600">処理中...</div>';
-  document.body.appendChild(blocker);
-
-  // 裏でAPI処理
-  if (pointItem) {
-    const r = await api.purchase(pointItem, 'point');
-    if (r.error) { showToast(r.error, 'error'); blocker.remove(); return; }
-  }
-  for (const item of freeItems) { await api.purchase(item, 'free'); }
-  for (const item of paypayItems) {
-    const r = await api.purchase(item, 'paypay');
-    if (r.error) { showToast(r.error, 'error'); break; }
-  }
-
-  // タッチブロック解除
-  blocker.remove();
-
-  // データ更新
-  Promise.all([loadMenu(), loadUserState()]).then(() => { renderMenu(); });
   window.dispatchEvent(new Event('cc:balance-updated'));
 
-  // PayPay分があればカメラモーダル表示
-  if (paypayItems.length > 0) {
+  if (!hasError) {
+    // 金額表示+カメラ起動モーダル
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
     overlay.innerHTML = `
       <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center">
-        <div style="font-size:42px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${paypayTotal.toLocaleString()}</div>
+        <div style="font-size:42px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${total.toLocaleString()}</div>
         <div style="font-size:15px;color:#333;font-weight:600;line-height:1.8;margin-bottom:24px">
           カフェに設置のQRコードを<br>読み込んでください
         </div>
-        <button id="cc-open-camera" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer;margin-bottom:12px">
+        <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer;margin-bottom:12px">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           カメラを起動
-        </button>
+          <input type="file" accept="image/*" capture="environment" style="display:none" id="cc-camera-input">
+        </label>
         <button id="cc-close-modal" style="padding:10px;border:none;background:none;color:#888;font-size:13px;cursor:pointer">閉じる</button>
       </div>
     `;
     document.body.appendChild(overlay);
-    overlay.querySelector('#cc-open-camera').addEventListener('click', async () => {
-      try {
-        await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      } catch(e) { /* カメラ権限拒否 */ }
+    overlay.querySelector('#cc-camera-input').addEventListener('change', () => {
       overlay.remove();
     });
     overlay.querySelector('#cc-close-modal').addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-  } else {
-    showToast('購入しました', 'success');
   }
-}
-
-async function handlePaypayPurchase() {
-  // PayPayボタンが押された場合もhandlePointPurchaseで一括処理
-  return handlePointPurchase();
 }
 
 // ---- Initialization ----
