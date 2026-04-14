@@ -146,12 +146,11 @@ function renderMenu() {
     const classes = [
       'menu-item',
       isSelected ? 'is-selected' : '',
-      isOutOfStock ? 'is-disabled' : '',
     ].filter(Boolean).join(' ');
 
     return `${separator}
       <div class="${classes}" data-item-id="${escapeHtml(String(itemId))}" role="listitem" tabindex="0"
-           aria-label="${escapeHtml(itemName)} ${isFree ? '無料' : item.price + 'pt'}" ${isOutOfStock ? 'aria-disabled="true"' : ''}>
+           aria-label="${escapeHtml(itemName)} ${isFree ? '無料' : item.price + 'pt'}">
         <div class="menu-item__icon">${iconInner}</div>
         <div class="menu-item__body">
           <div class="menu-item__name-row">
@@ -331,7 +330,7 @@ function handleCategoryClick(e) {
 
 function handleItemClick(e) {
   const itemEl = e.target.closest('.menu-item[data-item-id]');
-  if (!itemEl || itemEl.classList.contains('is-disabled')) return;
+  if (!itemEl) return;
 
   const itemId = itemEl.dataset.itemId;
   const item = menuItems.find((i) => String(i.item_id ?? i.id) === itemId);
@@ -402,48 +401,44 @@ async function handlePaypayPurchase() {
   const names = paypayItems.map(i => i.item_name ?? i.name).join('、');
   const total = paypayItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
 
-  // 購入記録
-  let hasError = false;
-  for (const item of paypayItems) {
-    const result = await api.purchase(item, 'paypay');
-    if (result.error) {
-      showToast(result.error, 'error');
-      hasError = true;
-      break;
-    }
-  }
-
-  selectedItems = [];
-  updateOrderBar();
-  await Promise.all([loadMenu(), loadUserState()]);
-  renderMenu();
-  window.dispatchEvent(new Event('cc:balance-updated'));
-
-  if (!hasError) {
-    // 金額表示+カメラ起動モーダル
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    overlay.innerHTML = `
-      <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center">
-        <div style="font-size:42px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${total.toLocaleString()}</div>
-        <div style="font-size:15px;color:#333;font-weight:600;line-height:1.8;margin-bottom:24px">
-          カフェに設置のQRコードを<br>読み込んでください
-        </div>
-        <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer;margin-bottom:12px">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          カメラを起動
-          <input type="file" accept="image/*" capture="environment" style="display:none" id="cc-camera-input">
-        </label>
-        <button id="cc-close-modal" style="padding:10px;border:none;background:none;color:#888;font-size:13px;cursor:pointer">閉じる</button>
+  // モーダル表示（購入はカメラ起動ボタンで確定）
+  const itemsCopy = [...paypayItems];
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center">
+      <div style="font-size:42px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${total.toLocaleString()}</div>
+      <div style="font-size:15px;color:#333;font-weight:600;line-height:1.8;margin-bottom:8px">
+        購入が確定されます
       </div>
-    `;
-    document.body.appendChild(overlay);
-    overlay.querySelector('#cc-camera-input').addEventListener('change', () => {
-      overlay.remove();
-    });
-    overlay.querySelector('#cc-close-modal').addEventListener('click', () => overlay.remove());
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-  }
+      <div style="font-size:13px;color:#888;line-height:1.6;margin-bottom:24px">
+        カフェに設置のQRコードを<br>カメラで読み込んでください
+      </div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:12px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        購入を確定してカメラを起動
+        <input type="file" accept="image/*" capture="environment" style="display:none" id="cc-camera-input">
+      </label>
+      <button id="cc-close-modal" style="padding:10px;border:none;background:none;color:#888;font-size:13px;cursor:pointer">キャンセル</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#cc-camera-input').addEventListener('change', async () => {
+    // カメラ起動時に購入記録を実行
+    for (const item of itemsCopy) {
+      const r = await api.purchase(item, 'paypay');
+      if (r.error) { showToast(r.error, 'error'); break; }
+    }
+    selectedItems = [];
+    updateOrderBar();
+    await Promise.all([loadMenu(), loadUserState()]);
+    renderMenu();
+    window.dispatchEvent(new Event('cc:balance-updated'));
+    overlay.remove();
+  });
+  overlay.querySelector('#cc-close-modal').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 }
 
 // ---- Initialization ----
