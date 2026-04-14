@@ -3,8 +3,9 @@
 社内カフェスペースの管理アプリ「Connect Cafe」がリリースされました！
 
 ▼ アクセスURL
-https://storage.googleapis.com/connect-cafe-site/index.html
-※ 社員のGoogleアカウント（@chronusinc.jp）でログインしてください
+https://kawamotoyuki1.github.io/connect-cafe/
+※ Safariで開いてログインしてください
+※ ログイン後に「ホーム画面に追加」するとアプリのように使えます
 
 ▼ ポイントについて
 ・毎月1日に +1,000pt が自動追加されます

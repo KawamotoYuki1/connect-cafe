@@ -75,7 +75,7 @@ export async function initAuth() {
  */
 export async function login() {
   const sb = await getSb();
-  const redirectUrl = 'https://storage.googleapis.com/connect-cafe-site/index.html';
+  const redirectUrl = window.location.origin + window.location.pathname;
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
