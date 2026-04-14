@@ -439,24 +439,26 @@ async function handlePaypayPurchase() {
     Promise.all([loadMenu(), loadUserState()]).then(() => renderMenu());
     window.dispatchEvent(new Event('cc:balance-updated'));
 
-    // 2. モーダル閉じる
-    overlay.remove();
-
-    // 3. カメラ起動（非表示inputをクリック→iOSカメラ起動）
-    const camInput = document.createElement('input');
-    camInput.type = 'file';
-    camInput.accept = 'image/*';
-    camInput.capture = 'environment';
-    camInput.style.display = 'none';
-    document.body.appendChild(camInput);
-    camInput.click();
-    camInput.addEventListener('change', () => camInput.remove());
-    setTimeout(() => camInput.remove(), 60000);
+    // 2. ボタンを「カメラを起動」に差し替え（ユーザーの直接タップでカメラ起動）
+    const card = overlay.querySelector('div > div');
+    card.innerHTML = `
+      <div style="font-size:16px;font-weight:700;color:#333;margin-bottom:8px">✅ 購入記録が完了しました</div>
+      <div style="font-size:42px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${total.toLocaleString()}</div>
+      <div style="font-size:13px;color:#888;line-height:1.6;margin-bottom:20px">
+        カフェに設置のQRコードを<br>カメラで読み込んでください
+      </div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:12px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        カメラを起動
+        <input type="file" accept="image/*" capture="environment" style="display:none">
+      </label>
+      <button style="padding:10px;border:none;background:none;color:#888;font-size:13px;cursor:pointer" onclick="this.closest('[style*=fixed]').remove()">閉じる</button>
+    `;
+    card.querySelector('input[type="file"]').addEventListener('change', () => overlay.remove());
   });
 
   overlay.querySelector('#cc-close-modal').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-  overlay.querySelector('#cc-camera-trigger').addEventListener('change', () => {});
 }
 
 // ---- Initialization ----
