@@ -401,7 +401,7 @@ async function handlePaypayPurchase() {
   const names = paypayItems.map(i => i.item_name ?? i.name).join('、');
   const total = paypayItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
 
-  // モーダル表示（購入はカメラ起動ボタンで確定）
+  // モーダル表示
   const itemsCopy = [...paypayItems];
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -414,31 +414,49 @@ async function handlePaypayPurchase() {
       <div style="font-size:13px;color:#888;line-height:1.6;margin-bottom:24px">
         カフェに設置のQRコードを<br>カメラで読み込んでください
       </div>
-      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:12px">
+      <button id="cc-confirm-buy" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:12px">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         購入を確定してカメラを起動
-        <input type="file" accept="image/*" capture="environment" style="display:none" id="cc-camera-input">
-      </label>
+      </button>
       <button id="cc-close-modal" style="padding:10px;border:none;background:none;color:#888;font-size:13px;cursor:pointer">キャンセル</button>
+      <input type="file" accept="image/*" capture="environment" style="display:none" id="cc-camera-trigger">
     </div>
   `;
   document.body.appendChild(overlay);
 
-  overlay.querySelector('#cc-camera-input').addEventListener('change', async () => {
-    // カメラ起動時に購入記録を実行
+  overlay.querySelector('#cc-confirm-buy').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.textContent = '処理中...';
+
+    // 1. 購入記録
     for (const item of itemsCopy) {
       const r = await api.purchase(item, 'paypay');
       if (r.error) { showToast(r.error, 'error'); break; }
     }
     selectedItems = [];
     updateOrderBar();
-    await Promise.all([loadMenu(), loadUserState()]);
-    renderMenu();
+    Promise.all([loadMenu(), loadUserState()]).then(() => renderMenu());
     window.dispatchEvent(new Event('cc:balance-updated'));
+
+    // 2. モーダル閉じる
     overlay.remove();
+
+    // 3. カメラ起動（非表示inputをクリック→iOSカメラ起動）
+    const camInput = document.createElement('input');
+    camInput.type = 'file';
+    camInput.accept = 'image/*';
+    camInput.capture = 'environment';
+    camInput.style.display = 'none';
+    document.body.appendChild(camInput);
+    camInput.click();
+    camInput.addEventListener('change', () => camInput.remove());
+    setTimeout(() => camInput.remove(), 60000);
   });
+
   overlay.querySelector('#cc-close-modal').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#cc-camera-trigger').addEventListener('change', () => {});
 }
 
 // ---- Initialization ----
