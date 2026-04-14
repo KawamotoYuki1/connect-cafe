@@ -451,22 +451,16 @@ async function handlePaypayPurchase() {
     Promise.all([loadMenu(), loadUserState()]).then(() => renderMenu());
     window.dispatchEvent(new Event('cc:balance-updated'));
 
-    // 2. ボタンを「カメラを起動」に差し替え（ユーザーの直接タップでカメラ起動）
+    // 2. 完了メッセージに差し替え
     const card = overlay.querySelector('div > div');
     card.innerHTML = `
       <div style="font-size:16px;font-weight:700;color:#333;margin-bottom:8px">✅ 購入記録が完了しました</div>
       <div style="font-size:42px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${total.toLocaleString()}</div>
-      <div style="font-size:13px;color:#888;line-height:1.6;margin-bottom:20px">
-        カフェに設置のQRコードを<br>カメラで読み込んでください
+      <div style="font-size:15px;color:#333;font-weight:600;line-height:1.8;margin-bottom:24px">
+        PayPayアプリを開いて<br>カフェ設置のQRコードを<br>スキャンしてください
       </div>
-      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:12px">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        カメラを起動
-        <input type="file" accept="image/*" capture="environment" style="display:none">
-      </label>
-      <button style="padding:10px;border:none;background:none;color:#888;font-size:13px;cursor:pointer" onclick="this.closest('[style*=fixed]').remove()">閉じる</button>
+      <button style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--color-primary,#8B6544);color:#fff;font-size:15px;font-weight:700;cursor:pointer" onclick="this.closest('[style*=fixed]').remove()">閉じる</button>
     `;
-    card.querySelector('input[type="file"]').addEventListener('change', () => overlay.remove());
   });
 
   overlay.querySelector('#cc-close-modal').addEventListener('click', () => overlay.remove());
