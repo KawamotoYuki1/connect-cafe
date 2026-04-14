@@ -404,8 +404,8 @@ async function handlePaypayPurchase() {
 
   const confirmed = await showModal({
     title: 'PayPayで支払う',
-    message: `『${names}』\n\n支払金額を PayPayアプリに\n手入力してください\n\n💰 ¥${total.toLocaleString()}\n\n「PayPayを開く」を押すと\nアプリが起動します`,
-    confirmText: 'PayPayを開く',
+    message: `『${names}』\n\n💰 ¥${total.toLocaleString()}\n\n購入記録後にPayPayアプリが開きます`,
+    confirmText: '記録してPayPayを開く',
     cancelText: 'キャンセル',
     type: 'warning',
   });
@@ -422,17 +422,33 @@ async function handlePaypayPurchase() {
     }
   }
 
-  if (!hasError) {
-    showToast(`${names} をPayPayで購入しました`, 'paypay');
-    // PayPay店舗QRコード直接リンクへ遷移（モバイルはPayPayアプリが起動）
-    window.location.href = 'https://qr.paypay.ne.jp/281801051YGB8Jx6O0vjLw3L';
-  }
   selectedItems = [];
   updateOrderBar();
-
   await Promise.all([loadMenu(), loadUserState()]);
   renderMenu();
   window.dispatchEvent(new Event('cc:balance-updated'));
+
+  if (!hasError) {
+    // PayPayリンクを<a>タグで表示するモーダル（Universal Links対応）
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center">
+        <div style="font-size:14px;color:#555;margin-bottom:8px">PayPayで支払ってください</div>
+        <div style="font-size:48px;font-weight:800;color:#DC2626;margin:16px 0">¥${total.toLocaleString()}</div>
+        <div style="font-size:12px;color:#888;margin-bottom:24px">上記の金額をPayPayアプリに入力してください</div>
+        <a href="https://qr.paypay.ne.jp/281801051YGB8Jx6O0vjLw3L"
+           target="_blank" rel="noopener"
+           style="display:block;padding:16px;background:#DC2626;color:#fff;border-radius:12px;font-weight:700;font-size:16px;text-decoration:none;margin-bottom:12px">
+          PayPayを開く
+        </a>
+        <button style="padding:10px 24px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#555;font-size:14px;cursor:pointer" id="paypay-close">閉じる</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#paypay-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  }
 }
 
 // ---- Initialization ----
