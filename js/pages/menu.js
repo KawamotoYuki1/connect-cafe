@@ -416,7 +416,7 @@ async function handlePaypayPurchase() {
       </div>
       <button id="cc-confirm-buy" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:12px">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        購入を確定してカメラを起動
+        購入を確定
       </button>
       <button id="cc-close-modal" style="padding:10px;border:none;background:none;color:#888;font-size:13px;cursor:pointer">キャンセル</button>
       <input type="file" accept="image/*" capture="environment" style="display:none" id="cc-camera-trigger">
