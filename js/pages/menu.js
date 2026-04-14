@@ -446,7 +446,9 @@ async function handlePaypayPurchase() {
       const r = await api.purchase(item, 'paypay');
       if (r.error) { showToast(r.error, 'error'); break; }
     }
-    selectedItems = [];
+    // PayPay分だけカートから除去（ポイント分は残す）
+    const purchasedIds = new Set(itemsCopy.map(i => String(i.item_id ?? i.id)));
+    selectedItems = selectedItems.filter(i => !purchasedIds.has(String(i.item_id ?? i.id)));
     updateOrderBar();
     Promise.all([loadMenu(), loadUserState()]).then(() => renderMenu());
     window.dispatchEvent(new Event('cc:balance-updated'));
