@@ -75,49 +75,14 @@ export async function initAuth() {
  */
 export async function login() {
   const sb = await getSb();
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-
-  if (isStandalone) {
-    // PWA（ホーム画面追加）: ポップアップ方式でログイン
-    const { data, error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        queryParams: { hd: CONFIG.COMPANY_DOMAIN },
-        redirectTo: window.location.origin + window.location.pathname,
-        skipBrowserRedirect: true,
-      },
-    });
-    if (error) throw error;
-    // ポップアップで認証ページを開く
-    if (data?.url) {
-      const popup = window.open(data.url, '_blank', 'width=500,height=600');
-      // ポップアップが閉じたらセッションをチェック
-      const checkInterval = setInterval(async () => {
-        if (popup?.closed) {
-          clearInterval(checkInterval);
-          const { data: { session } } = await sb.auth.getSession();
-          if (session?.user) {
-            userProfile = {
-              email: session.user.email,
-              name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email.split('@')[0],
-              picture: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || '',
-            };
-            notifyListeners();
-          }
-        }
-      }, 500);
-    }
-  } else {
-    // ブラウザ: 通常のリダイレクト方式
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        queryParams: { hd: CONFIG.COMPANY_DOMAIN },
-        redirectTo: window.location.origin + window.location.pathname,
-      },
-    });
-    if (error) throw error;
-  }
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      queryParams: { hd: CONFIG.COMPANY_DOMAIN },
+      redirectTo: window.location.origin + window.location.pathname,
+    },
+  });
+  if (error) throw error;
 }
 
 /**
