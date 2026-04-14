@@ -355,13 +355,27 @@ async function handlePointPurchase() {
 
   // ポイント対象商品（最高額1品）のみ購入
   if (pointItem) {
-    const name = pointItem.item_name ?? pointItem.name;
-    const confirmed = await showModal({
-      title: 'ポイント消費',
-      message: `「${name}」を${Number(pointItem.price).toLocaleString()}ptで購入しますか？\n残高: ${userBalance}pt → ${userBalance - Number(pointItem.price)}pt`,
-      confirmText: '購入する',
-      cancelText: 'キャンセル',
-      type: 'primary',
+    const ptName = pointItem.item_name ?? pointItem.name;
+    const ptPrice = Number(pointItem.price);
+    const newBalance = userBalance - ptPrice;
+
+    const confirmed = await new Promise(resolve => {
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity 0.2s';
+      ov.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center;transform:scale(0.95);transition:transform 0.2s">
+          <div style="font-size:42px;font-weight:800;color:var(--color-primary,#8B6544);margin:8px 0 16px">${ptPrice.toLocaleString()}pt</div>
+          <div style="font-size:15px;color:#333;font-weight:600;margin-bottom:4px">「${escapeHtml(ptName)}」</div>
+          <div style="font-size:13px;color:#888;margin-bottom:20px">残高: ${userBalance.toLocaleString()}pt → ${newBalance.toLocaleString()}pt</div>
+          <button id="cc-pt-confirm" style="width:100%;padding:16px;background:var(--color-primary,#8B6544);color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:12px">購入を確定</button>
+          <button id="cc-pt-cancel" style="padding:10px;border:none;background:none;color:#888;font-size:13px;cursor:pointer">キャンセル</button>
+        </div>
+      `;
+      document.body.appendChild(ov);
+      requestAnimationFrame(() => { ov.style.opacity = '1'; ov.querySelector('div > div').style.transform = 'scale(1)'; });
+      ov.querySelector('#cc-pt-confirm').addEventListener('click', () => { ov.remove(); resolve(true); });
+      ov.querySelector('#cc-pt-cancel').addEventListener('click', () => { ov.remove(); resolve(false); });
+      ov.addEventListener('click', (e) => { if (e.target === ov) { ov.remove(); resolve(false); } });
     });
     if (!confirmed) return;
 
@@ -370,7 +384,7 @@ async function handlePointPurchase() {
       showToast(result.error, 'error');
       return;
     }
-    showToast(`${name} をポイントで購入しました`, 'success');
+    showToast(`${ptName} をポイントで購入しました`, 'success');
   }
 
   // 無料商品も同時に処理
