@@ -353,85 +353,75 @@ async function handlePointPurchase() {
   if (selectedItems.length === 0) return;
 
   const { freeItems, pointItem, paypayItems } = classifyCart();
+  const paypayTotal = paypayItems.reduce((s, i) => s + Number(i.price), 0);
 
-  // ポイント対象商品（最高額1品）のみ購入
+  // 確認モーダル（ポイント+PayPay一括）
+  let msg = '';
   if (pointItem) {
-    const name = pointItem.item_name ?? pointItem.name;
-    const confirmed = await showModal({
-      title: 'ポイント消費',
-      message: `「${name}」を${Number(pointItem.price).toLocaleString()}ptで購入しますか？\n残高: ${userBalance}pt → ${userBalance - Number(pointItem.price)}pt`,
-      confirmText: '購入する',
-      cancelText: 'キャンセル',
-      type: 'primary',
-    });
-    if (!confirmed) return;
+    const ptName = pointItem.item_name ?? pointItem.name;
+    msg += `ポイント: 「${ptName}」${Number(pointItem.price).toLocaleString()}pt\n残高: ${userBalance}pt → ${userBalance - Number(pointItem.price)}pt`;
+  }
+  if (paypayItems.length > 0) {
+    const ppNames = paypayItems.map(i => i.item_name ?? i.name).join('、');
+    msg += `${msg ? '\n\n' : ''}PayPay: 「${ppNames}」\n💰 ¥${paypayTotal.toLocaleString()}\n\n購入記録後にカメラが開きますので\nQRコードを読み込んでください`;
+  }
+  if (freeItems.length > 0) {
+    const fNames = freeItems.map(i => i.item_name ?? i.name).join('、');
+    msg += `${msg ? '\n\n' : ''}無料: ${fNames}`;
+  }
 
+  const confirmBtn = paypayItems.length > 0 ? '記録してカメラを開く' : '購入する';
+
+  const confirmed = await showModal({
+    title: '注文確認',
+    message: msg,
+    confirmText: confirmBtn,
+    cancelText: 'キャンセル',
+    type: paypayItems.length > 0 ? 'warning' : 'primary',
+  });
+  if (!confirmed) return;
+
+  // ポイント購入
+  if (pointItem) {
     const result = await api.purchase(pointItem, 'point');
     if (result.error) {
       showToast(result.error, 'error');
       return;
     }
-    showToast(`${name} をポイントで購入しました`, 'success');
   }
 
-  // 無料商品も同時に処理
+  // 無料商品
   for (const item of freeItems) {
     await api.purchase(item, 'free');
   }
 
-  // カートから処理済み商品を除去（PayPay分は残す）
-  if (paypayItems.length > 0) {
-    selectedItems = [...paypayItems];
-    showToast(`PayPay分 ¥${paypayItems.reduce((s, i) => s + Number(i.price), 0).toLocaleString()} はQRコードで支払いしてください`, 'info');
-  } else {
-    selectedItems = [];
-  }
-
-  updateOrderBar();
-  await Promise.all([loadMenu(), loadUserState()]);
-  renderMenu();
-  window.dispatchEvent(new Event('cc:balance-updated'));
-}
-
-async function handlePaypayPurchase() {
-  if (selectedItems.length === 0) return;
-
-  const { paypayItems } = classifyCart();
-  if (paypayItems.length === 0) return;
-
-  const names = paypayItems.map(i => i.item_name ?? i.name).join('、');
-  const total = paypayItems.reduce((s, i) => s + Number(i.price ?? 0), 0);
-
-  const confirmed = await showModal({
-    title: 'PayPayで支払う',
-    message: `『${names}』\n\n💰 ¥${total.toLocaleString()}\n\n購入記録後にカメラが開きますので\nQRコードを読み込んでください`,
-    confirmText: '記録してカメラを開く',
-    cancelText: 'キャンセル',
-    type: 'warning',
-  });
-
-  if (!confirmed) return;
-
-  let hasError = false;
+  // PayPay商品
   for (const item of paypayItems) {
     const result = await api.purchase(item, 'paypay');
     if (result.error) {
       showToast(result.error, 'error');
-      hasError = true;
       break;
     }
   }
 
+  // カートクリア
   selectedItems = [];
   updateOrderBar();
   await Promise.all([loadMenu(), loadUserState()]);
   renderMenu();
   window.dispatchEvent(new Event('cc:balance-updated'));
 
-  if (!hasError) {
-    // PayPayスキャン画面を直接起動（カスタムURLスキーム）
+  // PayPay分があればアプリ起動
+  if (paypayItems.length > 0) {
     window.location.href = 'paypay://scan';
+  } else {
+    showToast('購入しました', 'success');
   }
+}
+
+async function handlePaypayPurchase() {
+  // PayPayボタンが押された場合もhandlePointPurchaseで一括処理
+  return handlePointPurchase();
 }
 
 // ---- Initialization ----
