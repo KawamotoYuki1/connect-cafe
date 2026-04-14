@@ -355,40 +355,37 @@ async function handlePointPurchase() {
   const { freeItems, pointItem, paypayItems } = classifyCart();
   const paypayTotal = paypayItems.reduce((s, i) => s + Number(i.price), 0);
 
-  // 確認なし。即購入記録。
-
-  // ポイント購入
-  if (pointItem) {
-    const result = await api.purchase(pointItem, 'point');
-    if (result.error) {
-      showToast(result.error, 'error');
-      return;
-    }
-    showToast(`${pointItem.item_name ?? pointItem.name} をポイントで購入`, 'success');
-  }
-
-  // 無料商品
-  for (const item of freeItems) {
-    await api.purchase(item, 'free');
-  }
-
-  // PayPay商品
-  for (const item of paypayItems) {
-    const result = await api.purchase(item, 'paypay');
-    if (result.error) {
-      showToast(result.error, 'error');
-      break;
-    }
-  }
-
-  // カートクリア
+  // 即座にカートクリア+タッチブロック
+  const items = [...selectedItems];
   selectedItems = [];
   updateOrderBar();
-  await Promise.all([loadMenu(), loadUserState()]);
   renderMenu();
+
+  // タッチブロック用オーバーレイ（即表示）
+  const blocker = document.createElement('div');
+  blocker.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:9998;display:flex;align-items:center;justify-content:center;';
+  blocker.innerHTML = '<div style="color:#fff;font-size:16px;font-weight:600">処理中...</div>';
+  document.body.appendChild(blocker);
+
+  // 裏でAPI処理
+  if (pointItem) {
+    const r = await api.purchase(pointItem, 'point');
+    if (r.error) { showToast(r.error, 'error'); blocker.remove(); return; }
+  }
+  for (const item of freeItems) { await api.purchase(item, 'free'); }
+  for (const item of paypayItems) {
+    const r = await api.purchase(item, 'paypay');
+    if (r.error) { showToast(r.error, 'error'); break; }
+  }
+
+  // タッチブロック解除
+  blocker.remove();
+
+  // データ更新
+  Promise.all([loadMenu(), loadUserState()]).then(() => { renderMenu(); });
   window.dispatchEvent(new Event('cc:balance-updated'));
 
-  // PayPay分があればカメラ起動案内
+  // PayPay分があればカメラモーダル表示
   if (paypayItems.length > 0) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -396,7 +393,7 @@ async function handlePointPurchase() {
       <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center">
         <div style="font-size:42px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${paypayTotal.toLocaleString()}</div>
         <div style="font-size:15px;color:#333;font-weight:600;line-height:1.8;margin-bottom:24px">
-          購入記録後にカメラが開きますので<br>QRコードを読み込んでください
+          カフェに設置のQRコードを<br>読み込んでください
         </div>
         <button id="cc-open-camera" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer;margin-bottom:12px">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -408,17 +405,14 @@ async function handlePointPurchase() {
     document.body.appendChild(overlay);
     overlay.querySelector('#cc-open-camera').addEventListener('click', async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        // カメラが起動した→そのまま開いておく（ユーザーがQRを読む）
-        // ※実際にはPayPayアプリでスキャンするので、ここではカメラを閉じてOK
-        stream.getTracks().forEach(t => t.stop());
-      } catch(e) {
-        // カメラ権限拒否
-      }
+        await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      } catch(e) { /* カメラ権限拒否 */ }
       overlay.remove();
     });
     overlay.querySelector('#cc-close-modal').addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  } else {
+    showToast('購入しました', 'success');
   }
 }
 
