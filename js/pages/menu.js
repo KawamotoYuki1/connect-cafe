@@ -429,7 +429,7 @@ async function handlePaypayPurchase() {
   window.dispatchEvent(new Event('cc:balance-updated'));
 
   if (!hasError) {
-    // PayPay支払い案内モーダル
+    // PayPay支払い案内モーダル + カメラ起動ボタン
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
     overlay.innerHTML = `
@@ -438,27 +438,15 @@ async function handlePaypayPurchase() {
         <div style="font-size:15px;color:#333;font-weight:600;line-height:1.8;margin-bottom:24px">
           カフェに設置のPayPay QRコードから<br>支払いを行ってください
         </div>
-        <button id="paypay-camera" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer;margin-bottom:12px">
+        <a href="paypay://"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border-radius:12px;font-weight:700;font-size:16px;text-decoration:none;margin-bottom:12px">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          カメラを起動
-        </button>
+          PayPayを開く
+        </a>
         <button style="padding:10px 24px;border:1px solid #ddd;border-radius:10px;background:#fff;color:#555;font-size:14px;cursor:pointer;width:100%" id="paypay-close">閉じる</button>
       </div>
     `;
     document.body.appendChild(overlay);
-
-    overlay.querySelector('#paypay-camera').addEventListener('click', async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        // カメラが起動できたら停止してPayPayリンクに遷移
-        stream.getTracks().forEach(t => t.stop());
-        window.open('https://qr.paypay.ne.jp/281801051YGB8Jx6O0vjLw3L', '_blank');
-      } catch {
-        // カメラ権限拒否 → PayPayリンクに直接遷移
-        window.open('https://qr.paypay.ne.jp/281801051YGB8Jx6O0vjLw3L', '_blank');
-      }
-      overlay.remove();
-    });
     overlay.querySelector('#paypay-close').addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
   }
