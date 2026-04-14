@@ -355,31 +355,7 @@ async function handlePointPurchase() {
   const { freeItems, pointItem, paypayItems } = classifyCart();
   const paypayTotal = paypayItems.reduce((s, i) => s + Number(i.price), 0);
 
-  // 確認モーダル（ポイント+PayPay一括）
-  let msg = '';
-  if (pointItem) {
-    const ptName = pointItem.item_name ?? pointItem.name;
-    msg += `ポイント: 「${ptName}」${Number(pointItem.price).toLocaleString()}pt\n残高: ${userBalance}pt → ${userBalance - Number(pointItem.price)}pt`;
-  }
-  if (paypayItems.length > 0) {
-    const ppNames = paypayItems.map(i => i.item_name ?? i.name).join('、');
-    msg += `${msg ? '\n\n' : ''}PayPay: 「${ppNames}」\n💰 ¥${paypayTotal.toLocaleString()}\n\n購入記録後にカメラが開きますので\nQRコードを読み込んでください`;
-  }
-  if (freeItems.length > 0) {
-    const fNames = freeItems.map(i => i.item_name ?? i.name).join('、');
-    msg += `${msg ? '\n\n' : ''}無料: ${fNames}`;
-  }
-
-  const confirmBtn = paypayItems.length > 0 ? '記録してカメラを開く' : '購入する';
-
-  const confirmed = await showModal({
-    title: '注文確認',
-    message: msg,
-    confirmText: confirmBtn,
-    cancelText: 'キャンセル',
-    type: paypayItems.length > 0 ? 'warning' : 'primary',
-  });
-  if (!confirmed) return;
+  // 確認なし。即購入記録。
 
   // ポイント購入
   if (pointItem) {
@@ -388,6 +364,7 @@ async function handlePointPurchase() {
       showToast(result.error, 'error');
       return;
     }
+    showToast(`${pointItem.item_name ?? pointItem.name} をポイントで購入`, 'success');
   }
 
   // 無料商品
@@ -411,11 +388,9 @@ async function handlePointPurchase() {
   renderMenu();
   window.dispatchEvent(new Event('cc:balance-updated'));
 
-  // PayPay分があればアプリ起動
+  // PayPay分があれば金額案内のみ
   if (paypayItems.length > 0) {
-    window.location.href = 'paypay://scan';
-  } else {
-    showToast('購入しました', 'success');
+    showToast(`¥${paypayTotal.toLocaleString()} をPayPayでお支払いください`, 'paypay');
   }
 }
 
