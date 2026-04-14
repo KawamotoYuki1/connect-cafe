@@ -88,15 +88,17 @@
     .free-drink-pill {
       display: inline-flex;
       align-items: center;
-      gap: var(--space-1);
-      padding: 6px 14px;
+      gap: 4px;
+      padding: 4px 8px;
       background: var(--color-primary-ghost);
       border: 1px solid var(--color-primary-lighter);
       border-radius: var(--radius-pill);
-      font-size: var(--text-sm);
+      font-size: 11px;
+      white-space: nowrap;
       font-weight: var(--weight-medium);
       color: var(--color-primary-dark);
     }
+    .free-drink-pill svg { width: 16px; height: 16px; flex-shrink: 0; }
 
     /* ---- Section Title ---- */
     .section-title {
@@ -667,13 +669,8 @@
 
       <!-- Free Drinks -->
       <section class="mb-6">
-        <h3 class="section-title">無料ドリンク（飲み放題）</h3>
-        <div class="free-drinks">
-          <span class="free-drink-pill">💧 水</span>
-          <span class="free-drink-pill">☕ コーヒー</span>
-          <span class="free-drink-pill">🍵 烏龍茶</span>
-          <span class="free-drink-pill">♨️ お湯</span>
-        </div>
+        <h3 class="section-title" style="font-size:12px">無料ドリンク</h3>
+        <div class="free-drinks" id="home-free-drinks"></div>
       </section>
 
       <!-- Stats Grid -->

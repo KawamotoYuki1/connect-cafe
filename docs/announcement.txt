@@ -17,9 +17,9 @@ https://storage.googleapis.com/connect-cafe-site/index.html
 ③ 「購入を確定」をタップで完了！
 
 ▼ PayPayでの支払いについて
-購入確定後にカメラが起動します。
-カフェに設置のPayPay QRコードを読み取り、
-PayPayアプリで金額を入力して支払いを完了してください。
+購入確定後にPayPayでの支払い金額が表示されます。
+PayPayアプリを開いてカフェ設置のQRコードをスキャンし、
+金額を入力して支払いを完了してください。
 ※ PayPayの支払いはご自身で完了をお願いします
 
 ▼ 無料ドリンク

@@ -142,6 +142,23 @@ async function loadRecentHistory() {
   }).join('');
 }
 
+// ---- Free Drinks ----
+
+function renderFreeDrinks() {
+  const el = document.getElementById('home-free-drinks');
+  if (!el) return;
+
+  const freeItems = menuCache.filter(i => i.category === 'free' || Number(i.price) === 0);
+  if (freeItems.length === 0) return;
+
+  el.innerHTML = freeItems.map(item => {
+    const iconKey = item.icon_svg ?? item.iconSvg;
+    const iconHtml = iconKey ? getIcon(iconKey, 16) : '';
+    const name = escapeHtml(item.name ?? item.item_name ?? '');
+    return `<span class="free-drink-pill">${iconHtml} ${name}</span>`;
+  }).join('');
+}
+
 // ---- Page Show Handler ----
 
 let isLoading = false;
@@ -154,6 +171,9 @@ async function onPageShow() {
     // メニューデータをキャッシュ（アイコン紐づけ用）
     const menuResult = await api.getMenu();
     if (Array.isArray(menuResult)) menuCache = menuResult;
+
+    // 無料ドリンクをSVGアイコン付きで描画
+    renderFreeDrinks();
 
     await Promise.all([
       loadBalance(),
