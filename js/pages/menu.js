@@ -422,10 +422,8 @@ async function handlePaypayPurchase() {
   overlay.innerHTML = `
     <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center">
       <div style="font-size:42px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${total.toLocaleString()}</div>
-      <div style="font-size:15px;color:#333;font-weight:600;line-height:1.8;margin-bottom:8px">
-        購入が確定されます
-      </div>
-      <div style="font-size:13px;color:#888;line-height:1.6;margin-bottom:24px">
+      <div style="font-size:15px;color:#333;font-weight:600;margin-bottom:4px">「${escapeHtml(names)}」</div>
+      <div style="font-size:13px;color:#888;line-height:1.6;margin-bottom:20px">
         カフェに設置のQRコードを<br>カメラで読み込んでください
       </div>
       <button id="cc-confirm-buy" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;margin-bottom:12px">
