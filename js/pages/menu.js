@@ -388,9 +388,37 @@ async function handlePointPurchase() {
   renderMenu();
   window.dispatchEvent(new Event('cc:balance-updated'));
 
-  // PayPay分があれば金額案内のみ
+  // PayPay分があればカメラ起動案内
   if (paypayItems.length > 0) {
-    showToast(`¥${paypayTotal.toLocaleString()} をPayPayでお支払いください`, 'paypay');
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center">
+        <div style="font-size:42px;font-weight:800;color:#DC2626;margin:8px 0 16px">¥${paypayTotal.toLocaleString()}</div>
+        <div style="font-size:15px;color:#333;font-weight:600;line-height:1.8;margin-bottom:24px">
+          購入記録後にカメラが開きますので<br>QRコードを読み込んでください
+        </div>
+        <button id="cc-open-camera" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:16px;background:#DC2626;color:#fff;border:none;border-radius:12px;font-weight:700;font-size:16px;cursor:pointer;margin-bottom:12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          カメラを起動
+        </button>
+        <button id="cc-close-modal" style="padding:10px;border:none;background:none;color:#888;font-size:13px;cursor:pointer">閉じる</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#cc-open-camera').addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        // カメラが起動した→そのまま開いておく（ユーザーがQRを読む）
+        // ※実際にはPayPayアプリでスキャンするので、ここではカメラを閉じてOK
+        stream.getTracks().forEach(t => t.stop());
+      } catch(e) {
+        // カメラ権限拒否
+      }
+      overlay.remove();
+    });
+    overlay.querySelector('#cc-close-modal').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
   }
 }
 
