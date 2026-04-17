@@ -148,8 +148,12 @@ function renderMenu() {
       isSelected ? 'is-selected' : '',
     ].filter(Boolean).join(' ');
 
+    const cartBtnHtml = isFree
+      ? ''
+      : `<button class="menu-item__cart-btn" aria-label="${isSelected ? '選択解除' : 'カートに追加'}">${isSelected ? '✓' : '+'}</button>`;
+
     return `${separator}
-      <div class="${classes}" data-item-id="${escapeHtml(String(itemId))}" role="listitem" tabindex="0"
+      <div class="${classes}" data-item-id="${escapeHtml(String(itemId))}" data-free="${isFree ? '1' : '0'}" role="listitem" tabindex="0"
            aria-label="${escapeHtml(itemName)} ${isFree ? '無料' : item.price + 'pt'}">
         <div class="menu-item__icon">${iconInner}</div>
         <div class="menu-item__body">
@@ -159,9 +163,7 @@ function renderMenu() {
           </div>
         </div>
         ${priceHtml}
-        <button class="menu-item__cart-btn" aria-label="${isSelected ? '選択解除' : 'カートに追加'}">
-          ${isSelected ? '✓' : '+'}
-        </button>
+        ${cartBtnHtml}
       </div>`;
   }).join('');
 }
@@ -331,6 +333,7 @@ function handleCategoryClick(e) {
 function handleItemClick(e) {
   const itemEl = e.target.closest('.menu-item[data-item-id]');
   if (!itemEl) return;
+  if (itemEl.dataset.free === '1') return;
 
   const itemId = itemEl.dataset.itemId;
   const item = menuItems.find((i) => String(i.item_id ?? i.id) === itemId);
